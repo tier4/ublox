@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Tier IV, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //==============================================================================
 // Copyright (c) 2012, Johannes Meyer, TU Darmstadt
 // All rights reserved.
@@ -422,7 +438,8 @@ bool UbloxNode::configureUblox() {
       if (load_.loadMask & load_.MASK_IO_PORT) {
         ROS_DEBUG("Loaded I/O configuration from memory, resetting serial %s",
                   "communications.");
-        boost::posix_time::seconds wait(kResetWait);
+        const int resetWait = kResetWait;
+        boost::posix_time::seconds wait(resetWait);
         gps.reset(wait);
         if (!gps.isConfigured())
           throw std::runtime_error(
@@ -1751,25 +1768,17 @@ void HpPosRecProduct::callbackNavRelPosNed(const ublox_msgs::NavRELPOSNED9 &m) {
     imu_.linear_acceleration_covariance[0] = -1;
     imu_.angular_velocity_covariance[0] = -1;
 
-    // Transform angle since ublox is representing heading as NED but ROS uses
-    // ENU as convention (REP-103). Also convert the base-to-rover angle to a
-    // robot-to-base angle (consistent with frame_id)
-    double heading =
-        -(static_cast<double>(m.relPosHeading) * 1e-5 / 180.0 * M_PI) - M_PI_2;
+    double heading = static_cast<double>(m.relPosHeading) * 1e-5 / 180.0 * M_PI;
     tf::Quaternion orientation;
     orientation.setRPY(0, 0, heading);
     imu_.orientation.x = orientation[0];
     imu_.orientation.y = orientation[1];
     imu_.orientation.z = orientation[2];
     imu_.orientation.w = orientation[3];
+    // Only heading is reported with an accuracy in 0.1mm units
     imu_.orientation_covariance[0] = 1000.0;
     imu_.orientation_covariance[4] = 1000.0;
-    imu_.orientation_covariance[8] = 1000.0;
-    // When heading is reported to be valid, use accuracy reported in 1e-5 deg
-    // units
-    if (m.flags & ublox_msgs::NavRELPOSNED9::FLAGS_REL_POS_HEAD_VALID) {
-      imu_.orientation_covariance[8] = pow(m.accHeading / 10000.0, 2);
-    }
+    imu_.orientation_covariance[8] = pow(m.accHeading / 10000.0, 2);
 
     imu_pub.publish(imu_);
   }
