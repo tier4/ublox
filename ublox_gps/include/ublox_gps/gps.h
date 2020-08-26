@@ -30,14 +30,14 @@
 #ifndef UBLOX_GPS_H
 #define UBLOX_GPS_H
 // STL
-#include <map>
-#include <vector>
 #include <locale>
+#include <map>
 #include <stdexcept>
+#include <vector>
 // Boost
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/serial_port.hpp>
-#include <boost/asio/io_service.hpp>
 #include <boost/atomic.hpp>
 // ROS
 #include <ros/console.h>
@@ -54,14 +54,8 @@
  */
 namespace ublox_gps {
 //! Possible baudrates for u-blox devices
-constexpr static unsigned int kBaudrates[] = { 4800,
-                                               9600,
-                                               19200,
-                                               38400,
-                                               57600,
-                                               115200,
-                                               230400,
-                                               460800 };
+constexpr static unsigned int kBaudrates[] = {4800,  9600,   19200,  38400,
+                                              57600, 115200, 230400, 460800};
 /**
  * @brief Handles communication with and configuration of the u-blox device
  */
@@ -86,10 +80,13 @@ class Gps {
   }
 
   /**
-   * @brief Set the internal flag for enabling or disabling the initial configurations.
+   * @brief Set the internal flag for enabling or disabling the initial
+   * configurations.
    * @param config_on_startup boolean flag
    */
-  void setConfigOnStartup(const bool config_on_startup) { config_on_startup_flag_ = config_on_startup; }
+  void setConfigOnStartup(const bool config_on_startup) {
+    config_on_startup_flag_ = config_on_startup;
+  }
 
   /**
    * @brief Initialize TCP I/O.
@@ -127,7 +124,7 @@ class Gps {
    * @brief Reset I/O communications.
    * @param wait Time to wait before restarting communications
    */
-  void reset(const boost::posix_time::time_duration& wait);
+  void reset(const boost::posix_time::time_duration &wait);
 
   /**
    * @brief Send a reset message to the u-blox device.
@@ -145,7 +142,7 @@ class Gps {
    * I/O reset successfully
    */
   bool configGnss(ublox_msgs::CfgGNSS gnss,
-                  const boost::posix_time::time_duration& wait);
+                  const boost::posix_time::time_duration &wait);
 
   /**
    * @brief Send a message to the receiver to delete the BBR data stored in
@@ -171,7 +168,7 @@ class Gps {
    * configuration parameters
    * @return true on ACK, false on other conditions.
    */
-  bool disableUart1(ublox_msgs::CfgPRT& prev_cfg);
+  bool disableUart1(ublox_msgs::CfgPRT &prev_cfg);
 
   /**
    * @brief Configure the USB Port.
@@ -224,8 +221,7 @@ class Gps {
    * @param fixed_pos_acc Fixed position 3D accuracy [m]
    * @return true on ACK, false if settings are incorrect or on other conditions
    */
-  bool configTmode3Fixed(bool lla_flag,
-                         std::vector<float> arp_position,
+  bool configTmode3Fixed(bool lla_flag, std::vector<float> arp_position,
                          std::vector<int8_t> arp_position_hp,
                          float fixed_pos_acc);
 
@@ -299,7 +295,7 @@ class Gps {
   bool setUseAdr(bool enable);
 
   /**
-   * @brief Configure the U-Blox to UTC time 
+   * @brief Configure the U-Blox to UTC time
    * @return true on ACK, false on other conditions.
    *
    * @note This is part of the expert settings. It is recommended you check
@@ -316,7 +312,7 @@ class Gps {
    * the ublox manual first.
    */
   bool setTimtm2(uint8_t rate);
- 
+
   /**
    * @brief Configure the U-Blox send rate of the message & subscribe to the
    * given message
@@ -350,8 +346,8 @@ class Gps {
    * @param timeout the amount of time to wait for the desired message
    */
   template <typename T>
-  bool read(T& message,
-            const boost::posix_time::time_duration& timeout = default_timeout_);
+  bool read(T &message,
+            const boost::posix_time::time_duration &timeout = default_timeout_);
 
   bool isInitialized() const { return worker_ != 0; }
   bool isConfigured() const { return isInitialized() && configured_; }
@@ -365,9 +361,9 @@ class Gps {
    * @param timeout the amount of time to wait for the desired message
    */
   template <typename ConfigT>
-  bool poll(ConfigT& message,
-            const std::vector<uint8_t>& payload = std::vector<uint8_t>(),
-            const boost::posix_time::time_duration& timeout = default_timeout_);
+  bool poll(ConfigT &message,
+            const std::vector<uint8_t> &payload = std::vector<uint8_t>(),
+            const boost::posix_time::time_duration &timeout = default_timeout_);
   /**
    * Poll a u-blox message.
    * @param class_id the u-blox message class id
@@ -377,7 +373,7 @@ class Gps {
    * @param timeout the amount of time to wait for the desired message
    */
   bool poll(uint8_t class_id, uint8_t message_id,
-            const std::vector<uint8_t>& payload = std::vector<uint8_t>());
+            const std::vector<uint8_t> &payload = std::vector<uint8_t>());
 
   /**
    * @brief Send the given configuration message.
@@ -387,7 +383,7 @@ class Gps {
    * wait was set to false
    */
   template <typename ConfigT>
-  bool configure(const ConfigT& message, bool wait = true);
+  bool configure(const ConfigT &message, bool wait = true);
 
   /**
    * @brief Wait for an acknowledge message until the timeout
@@ -396,35 +392,35 @@ class Gps {
    * @param msg_id the expected message ID of the ACK
    * @return true if expected ACK received, false otherwise
    */
-  bool waitForAcknowledge(const boost::posix_time::time_duration& timeout,
+  bool waitForAcknowledge(const boost::posix_time::time_duration &timeout,
                           uint8_t class_id, uint8_t msg_id);
 
   /**
    * @brief Set the callback function which handles raw data.
    * @param callback the write callback which handles raw data
    */
-  void setRawDataCallback(const Worker::Callback& callback);
+  void setRawDataCallback(const Worker::Callback &callback);
 
  private:
   //! Types for ACK/NACK messages, WAIT is used when waiting for an ACK
   enum AckType {
-    NACK, //! Not acknowledged
-    ACK, //! Acknowledge
-    WAIT //! Waiting for ACK
+    NACK,  //! Not acknowledged
+    ACK,   //! Acknowledge
+    WAIT   //! Waiting for ACK
   };
 
   //! Stores ACK/NACK messages
   struct Ack {
-    AckType type; //!< The ACK type
-    uint8_t class_id; //!< The class ID of the ACK
-    uint8_t msg_id; //!< The message ID of the ACK
+    AckType type;      //!< The ACK type
+    uint8_t class_id;  //!< The class ID of the ACK
+    uint8_t msg_id;    //!< The message ID of the ACK
   };
 
   /**
    * @brief Set the I/O worker
    * @param an I/O handler
    */
-  void setWorker(const boost::shared_ptr<Worker>& worker);
+  void setWorker(const boost::shared_ptr<Worker> &worker);
 
   /**
    * @brief Subscribe to ACK/NACK messages and UPD-SOS-ACK messages.
@@ -470,7 +466,6 @@ class Gps {
   //!< Whether or not initial configuration to the hardware is done
   bool config_on_startup_flag_;
 
-
   //! The default timeout for ACK messages
   static const boost::posix_time::time_duration default_timeout_;
   //! Stores last received ACK accessed by multiple threads
@@ -483,8 +478,8 @@ class Gps {
 };
 
 template <typename T>
-void Gps::subscribe(
-    typename CallbackHandler_<T>::Callback callback, unsigned int rate) {
+void Gps::subscribe(typename CallbackHandler_<T>::Callback callback,
+                    unsigned int rate) {
   if (!setRate(T::CLASS_ID, T::MESSAGE_ID, rate)) return;
   subscribe<T>(callback);
 }
@@ -501,21 +496,20 @@ void Gps::subscribeId(typename CallbackHandler_<T>::Callback callback,
 }
 
 template <typename ConfigT>
-bool Gps::poll(ConfigT& message,
-               const std::vector<uint8_t>& payload,
-               const boost::posix_time::time_duration& timeout) {
+bool Gps::poll(ConfigT &message, const std::vector<uint8_t> &payload,
+               const boost::posix_time::time_duration &timeout) {
   if (!poll(ConfigT::CLASS_ID, ConfigT::MESSAGE_ID, payload)) return false;
   return read(message, timeout);
 }
 
 template <typename T>
-bool Gps::read(T& message, const boost::posix_time::time_duration& timeout) {
+bool Gps::read(T &message, const boost::posix_time::time_duration &timeout) {
   if (!worker_) return false;
   return callbacks_.read(message, timeout);
 }
 
 template <typename ConfigT>
-bool Gps::configure(const ConfigT& message, bool wait) {
+bool Gps::configure(const ConfigT &message, bool wait) {
   if (!worker_) return false;
 
   // Reset ack
@@ -537,8 +531,7 @@ bool Gps::configure(const ConfigT& message, bool wait) {
   if (!wait) return true;
 
   // Wait for an acknowledgment and return whether or not it was received
-  return waitForAcknowledge(default_timeout_,
-                            message.CLASS_ID,
+  return waitForAcknowledge(default_timeout_, message.CLASS_ID,
                             message.MESSAGE_ID);
 }
 

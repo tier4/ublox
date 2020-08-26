@@ -14,9 +14,9 @@
 //       endorse or promote products derived from this software without
 //       specific prior written permission.
 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 // ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
 // DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 // (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -29,15 +29,15 @@
 #ifndef UBLOX_SERIALIZATION_ROS_H
 #define UBLOX_SERIALIZATION_ROS_H
 
-#include "serialization.h"
 #include "checksum.h"
+#include "serialization.h"
 
 #include <ros/serialization.h>
 
 namespace ublox {
 
 template <typename T>
-void Serializer<T>::read(const uint8_t *data, uint32_t count, 
+void Serializer<T>::read(const uint8_t *data, uint32_t count,
                          typename boost::call_traits<T>::reference message) {
   ros::serialization::IStream stream(const_cast<uint8_t *>(data), count);
   ros::serialization::Serializer<T>::read(stream, message);
@@ -50,12 +50,12 @@ uint32_t Serializer<T>::serializedLength(
 }
 
 template <typename T>
-void Serializer<T>::write(uint8_t *data, uint32_t size, 
+void Serializer<T>::write(uint8_t *data, uint32_t size,
                           typename boost::call_traits<T>::param_type message) {
   ros::serialization::OStream stream(data, size);
   ros::serialization::Serializer<T>::write(stream, message);
 }
 
-} // namespace ublox
+}  // namespace ublox
 
-#endif // UBLOX_SERIALIZATION_ROS_H
+#endif  // UBLOX_SERIALIZATION_ROS_H
