@@ -133,6 +133,12 @@ class CallbackHandlers {
   }
 
   /**
+   * @brief Set a callback function to pass IO error
+   * @param func a callback function to pass IO error
+   */
+  void setCallback(const ublox::Reader::Callback &func) { func_ = func; }
+
+  /**
    * @brief Add a callback handler for the given message type and ID. This is
    * used for messages in which have the same structure (and therefore msg file)
    * and same class ID but different message IDs. (e.g. INF, ACK)
@@ -201,6 +207,7 @@ class CallbackHandlers {
    */
   void readCallback(unsigned char *data, std::size_t &size) {
     ublox::Reader reader(data, size);
+    reader.setCallback(func_);
     // Read all U-Blox messages in buffer
     while (reader.search() != reader.end() && reader.found()) {
       if (debug >= 3) {
@@ -229,6 +236,8 @@ class CallbackHandlers {
   // Call back handlers for u-blox messages
   Callbacks callbacks_;
   boost::mutex callback_mutex_;
+  // A callback function to pass IO error
+  ublox::Reader::Callback func_;
 };
 
 }  // namespace ublox_gps

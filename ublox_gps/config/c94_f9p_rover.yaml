@@ -57,3 +57,17 @@ publish:
   nav:
     posecef: false
     pvt: true
+
+config:
+  ant: true
+  itfm: true
+
+itfm:
+  enable: true
+  bb_threshold: 3
+  cw_threshold: 15
+  enable2: false
+  ant_setting: 0
+
+tx_usage_warn: 0.95
+tx_usage_error: 1.00

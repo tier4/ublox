@@ -584,4 +584,34 @@ bool Gps::setTimtm2(uint8_t rate) {
   msg.rate = rate;
   return configure(msg);
 }
+
+bool Gps::setAntennaDetection(bool enable) {
+  ROS_DEBUG("%s SCD/OCD", (enable ? "Enabling" : "Disabling"));
+
+  ublox_msgs::CfgANT msg;
+  msg.flags = (enable ? (CfgANT::FLAGS_SCD | CfgANT::FLAGS_OCD) : 0);
+  return configure(msg);
+}
+
+bool Gps::configItfm(bool enable, uint8_t bbThreshold, uint8_t cwThreshold,
+                     bool enable2, uint8_t antSetting) {
+  ROS_DEBUG(
+      "%s Jamming/Interference Monitor bb:%u db cw:%u db extra:%s ant: %u",
+      (enable ? "Enabling" : "Disabling"), bbThreshold, cwThreshold,
+      (enable2 ? "enabling" : "disabling"), antSetting);
+
+  ublox_msgs::CfgITFM msg;
+
+  msg.config = (enable ? CfgITFM::CONFIG_ENABLE : 0);
+  msg.config |= (bbThreshold & CfgITFM::CONFIG_BB_THRESHOLD_MASK);
+  msg.config |= ((cwThreshold << CfgITFM::CONFIG_CW_THRESHOLD_SHIFT) &
+                 CfgITFM::CONFIG_CW_THRESHOLD_MASK);
+  msg.config |= CfgITFM::CONFIG_ALGORITHM_BITS;
+
+  msg.config2 = (enable2 ? CfgITFM::CONFIG2_ENABLE2 : 0);
+  msg.config2 |= CfgITFM::CONFIG2_GENERAL_BITS;
+  msg.config2 |= ((antSetting << CfgITFM::CONFIG_ANT_SETTING_SHIFT) &
+                  CfgITFM::CONFIG_ANT_SETTING_MASK);
+  return configure(msg);
+}
 }  // namespace ublox_gps

@@ -72,6 +72,7 @@
 #include <ublox_msgs/CfgHNR.h>
 #include <ublox_msgs/CfgINF.h>
 #include <ublox_msgs/CfgINF_Block.h>
+#include <ublox_msgs/CfgITFM.h>
 #include <ublox_msgs/CfgMSG.h>
 #include <ublox_msgs/CfgNAV5.h>
 #include <ublox_msgs/CfgNAVX5.h>
@@ -88,6 +89,8 @@
 #include <ublox_msgs/UpdSOS.h>
 #include <ublox_msgs/UpdSOS_Ack.h>
 
+#include <ublox_msgs/MonCOMMS.h>
+#include <ublox_msgs/MonCOMMS_Port.h>
 #include <ublox_msgs/MonGNSS.h>
 #include <ublox_msgs/MonHW.h>
 #include <ublox_msgs/MonHW6.h>
@@ -210,6 +213,7 @@ static const uint8_t DAT = CfgDAT::MESSAGE_ID;
 static const uint8_t GNSS = CfgGNSS::MESSAGE_ID;
 static const uint8_t HNR = CfgHNR::MESSAGE_ID;
 static const uint8_t INF = CfgINF::MESSAGE_ID;
+static const uint8_t ITFM = CfgITFM::MESSAGE_ID;
 static const uint8_t DGNSS = CfgDGNSS::MESSAGE_ID;
 static const uint8_t MSG = CfgMSG::MESSAGE_ID;
 static const uint8_t NAV5 = CfgNAV5::MESSAGE_ID;
@@ -229,6 +233,7 @@ static const uint8_t SOS = UpdSOS::MESSAGE_ID;
 }  // namespace UPD
 
 namespace MON {
+static const uint8_t COMMS = MonCOMMS::MESSAGE_ID;
 static const uint8_t GNSS = MonGNSS::MESSAGE_ID;
 static const uint8_t HW = MonHW::MESSAGE_ID;
 static const uint8_t VER = MonVER::MESSAGE_ID;

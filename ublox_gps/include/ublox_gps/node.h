@@ -31,7 +31,9 @@
 #define UBLOX_GPS_NODE_H
 
 // STL
+#include <map>
 #include <set>
+#include <string>
 #include <vector>
 // Boost
 #include <boost/algorithm/string.hpp>
@@ -580,6 +582,54 @@ class UbloxNode : public virtual ComponentInterface {
    */
   void configureInf();
 
+  /**
+   * @brief Configure for monitoring.
+   * @return true if configured successfully
+   */
+  bool configureMonitor();
+
+  /**
+   * @brief A callback function to receive data
+   * @param err error code
+   * @param msg error message
+   */
+  void callbackDataReceived(int8_t err, const std::string &msg);
+
+  /**
+   * @brief Publish the navigation status and call the diagnostic
+   * updater.
+   * @param m [in] the message to process
+   */
+  void callbackNavStatus(const ublox_msgs::NavSTATUS &m);
+
+  /**
+   * @brief Publish the comm port information and call the diagnostic
+   * updater.
+   * @param m [in] the message to process
+   */
+  void callbackMonComms(const ublox_msgs::MonCOMMS &m);
+
+  /**
+   * @brief check GNSS data
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkGnssData(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief check Spoofing status
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkSpoofingStatus(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief check Tx Usage
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkTxUsage(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
   //! The u-blox node components
   /*!
    * The node will call the functions in these interfaces for each object
@@ -640,6 +690,34 @@ class UbloxNode : public virtual ComponentInterface {
 
   //! raw data stream logging
   RawDataStreamPa rawDataStreamPa_;
+
+  //! txUsage(%) to generate warning
+  double tx_usage_warn_;
+  //! txUsage(%) to generate error
+  double tx_usage_error_;
+
+  //! The last received navigation status
+  ublox_msgs::NavSTATUS last_nav_status_;
+  //! The last received comm port information
+  ublox_msgs::MonCOMMS last_mon_comms_;
+
+  //! counter of received UBX-NAV-STATUS
+  uint64_t nav_status_count_;
+  //! counter of received UBX-MON-HW
+  uint64_t mon_comms_count_;
+
+  //! receive status
+  int8_t receive_status_;
+  //! receive status message
+  std::string receive_status_msg_;
+
+  /**
+   * @brief Usage status messages
+   */
+  const std::map<int, const char *> usage_dict_ = {
+      {diagnostic_msgs::DiagnosticStatus::OK, "OK"},
+      {diagnostic_msgs::DiagnosticStatus::WARN, "High load"},
+      {diagnostic_msgs::DiagnosticStatus::ERROR, "Very high load"}};
 };
 
 /**
@@ -981,7 +1059,33 @@ class UbloxFirmware8 : public UbloxFirmware7Plus<ublox_msgs::NavPVT> {
    */
   void subscribe();
 
+  /**
+   * @brief Add the diagnostics to the updater.
+   */
+  void initializeRosDiagnostics();
+
  private:
+  /**
+   * @brief Publish the hardware status and call the diagnostic
+   * updater.
+   * @param m [in] the message to process
+   */
+  void callbackMonHW(const ublox_msgs::MonHW &m);
+
+  /**
+   * @brief check Antenna status
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkAntennaStatus(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief check Jamming status
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkJammingStatus(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
   // Set from ROS parameters
   //! Whether or not to enable the Galileo GNSS
   bool enable_galileo_;
@@ -995,6 +1099,11 @@ class UbloxFirmware8 : public UbloxFirmware7Plus<ublox_msgs::NavPVT> {
   ublox_msgs::CfgNMEA cfg_nmea_;
   //! Whether to clear the flash memory during configuration
   bool clear_bbr_;
+
+  //! The last received hardwre status
+  ublox_msgs::MonHW last_mon_hw_;
+  //! counter of received UBX-MON-HW
+  uint64_t mon_hw_count_;
 };
 
 /**
