@@ -67,7 +67,7 @@ class CallbackHandler {
 template <typename T>
 class CallbackHandler_ : public CallbackHandler {
  public:
-  typedef boost::function<void(const T &)> Callback;  //!< A callback function
+  using Callback = boost::function<void(const T &)>;  //!< A callback function
 
   /**
    * @brief Initialize the Callback Handler with a callback function

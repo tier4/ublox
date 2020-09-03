@@ -249,6 +249,70 @@ uint8_t modelFromString(const std::string &model);
 uint8_t fixModeFromString(const std::string &mode);
 
 /**
+ * @brief Get text from aStatus in UBX-MON-HW.
+ * @param state aStatus in UBX-MON-HW
+ * @return text of aStatus
+ */
+inline std::string aStatusToString(const uint8_t state) {
+  if (state == ublox_msgs::MonHW::A_STATUS_INIT) return "Init";
+  if (state == ublox_msgs::MonHW::A_STATUS_UNKNOWN) return "Don't know";
+  if (state == ublox_msgs::MonHW::A_STATUS_OK) return "OK";
+  if (state == ublox_msgs::MonHW::A_STATUS_SHORT) return "Short";
+  if (state == ublox_msgs::MonHW::A_STATUS_OPEN) return "Open";
+
+  return "???";
+}
+
+/**
+ * @brief Get text from jammingState in UBX-MON-HW.
+ * @param state jammingState in UBX-MON-HW
+ * @return text of jammingState
+ */
+inline std::string jammingStateToString(const uint8_t state) {
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_UNKNOWN_OR_DISABLED)
+    return "Unknown or feature disabled";
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_OK) return "OK";
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_WARNING) return "Warning";
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_CRITICAL) return "Critical";
+  if (state == ublox_msgs::MonHW::A_STATUS_OPEN) return "Open";
+
+  return "???";
+}
+
+/**
+ * @brief Get text from portId in UBX-MON-COMMS.
+ * @param portId portId in UBX-MON-COMMS
+ * @return text of portId
+ */
+inline std::string portIdToString(const uint16_t portId) {
+  if (portId == 0x0000) return "I2C";
+  if (portId == 0x0001) return "UART1";
+  if (portId == 0x0002) return "UART2";
+  if (portId == 0x0003) return "USB";
+  if (portId == 0x0004) return "SPI";
+
+  return "???";
+}
+
+/**
+ * @brief Get text from spoofDetState in UBX-NAV-STATUS.
+ * @param state spoofDetState in UBX-NAV-STATUS
+ * @return text of spoofDetState
+ */
+inline std::string spoofDetStateToString(const uint8_t state) {
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_UNKNOWN)
+    return "Unknown or deactivated";
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_NONE)
+    return "No spoofing indicated";
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_SPOOFING)
+    return "Spoofing indicated";
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_MULTIPLE)
+    return "Multiple spoofing indications";
+
+  return "???";
+}
+
+/**
  * @brief Check that the parameter is above the minimum.
  * @param val the value to check
  * @param min the minimum for this value
@@ -593,7 +657,7 @@ class UbloxNode : public virtual ComponentInterface {
    * @param err error code
    * @param msg error message
    */
-  void callbackDataReceived(int8_t err, const std::string &msg);
+  void callbackDataReceived(const int8_t err, const std::string &msg);
 
   /**
    * @brief Publish the navigation status and call the diagnostic

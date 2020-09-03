@@ -44,7 +44,6 @@
 //==============================================================================
 
 #include "ublox_gps/node.h"
-#include "ublox_gps/to_string.h"
 
 #include <cmath>
 #include <sstream>
@@ -615,17 +614,18 @@ void UbloxNode::shutdown() {
 }
 
 bool UbloxNode::configureMonitor() {
-  nh->param("config/ant", enabled["cfg_ant"], false);
+  nh->param("config/ant", enabled["cfg_ant"], true);
   if (enabled["cfg_ant"]) {
     if (!gps.setAntennaDetection(true))
       throw std::runtime_error(
           std::string("Failed to Enable open/short circuit detection"));
   }
-  nh->param("config/itfm", enabled["cfg_itfm"], false);
+  nh->param("config/itfm", enabled["cfg_itfm"], true);
   if (enabled["cfg_itfm"]) {
-    bool enable = true, enable2 = false;
+    bool enable;
+    bool enable2;
     uint8_t bbThreshold = 3, cwThreshold = 15, antSetting = 0;
-    nh->param("itfm/enable", enable, false);
+    nh->param("itfm/enable", enable, true);
     getRosUint("itfm/bb_threshold", bbThreshold);
     getRosUint("itfm/cw_threshold", cwThreshold);
     nh->param("itfm/enable2", enable2, false);
@@ -636,7 +636,7 @@ bool UbloxNode::configureMonitor() {
   }
 }
 
-void UbloxNode::callbackDataReceived(int8_t err, const std::string &msg) {
+void UbloxNode::callbackDataReceived(const int8_t err, const std::string &msg) {
   receive_status_ = err;
   receive_status_msg_ = msg;
   if (updater.get()) updater->update();
