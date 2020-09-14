@@ -98,6 +98,8 @@ constexpr static uint32_t kNavSvInfoSubscribeRate = 20;
 // ROS objects
 //! ROS diagnostic updater
 boost::shared_ptr<diagnostic_updater::Updater> updater;
+//! ROS diagnostic updater for sensor diagnostics
+boost::shared_ptr<diagnostic_updater::Updater> sensor_diag_updater;
 //! Node Handle for GPS node
 boost::shared_ptr<ros::NodeHandle> nh;
 
@@ -614,10 +616,10 @@ class UbloxNode : public virtual ComponentInterface {
 
   /**
    * @brief Process the MonVer message and add firmware and product components.
-   *
+   * @return true if processed the MonVer message successfully
    * @details Determines the protocol version, product type and supported GNSS.
    */
-  void processMonVer();
+  bool processMonVer();
 
   /**
    * @brief Add the interface for firmware specific configuration, subscribers,

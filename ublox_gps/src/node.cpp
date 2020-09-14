@@ -363,9 +363,13 @@ void UbloxNode::initializeRosDiagnostics() {
   updater.reset(new diagnostic_updater::Updater());
   updater->setHardwareID("ublox");
 
-  updater->add("gnss_data", this, &UbloxNode::checkGnssData);
-  updater->add("gnss_spoofing", this, &UbloxNode::checkSpoofingStatus);
-  updater->add("gnss_tx_usage", this, &UbloxNode::checkTxUsage);
+  sensor_diag_updater.reset(new diagnostic_updater::Updater());
+  sensor_diag_updater->setHardwareID("ublox");
+
+  sensor_diag_updater->add("gnss_data", this, &UbloxNode::checkGnssData);
+  sensor_diag_updater->add("gnss_spoofing", this,
+                           &UbloxNode::checkSpoofingStatus);
+  sensor_diag_updater->add("gnss_tx_usage", this, &UbloxNode::checkTxUsage);
 
   mon_comms_count_ = 0;
   nav_status_count_ = 0;
@@ -377,10 +381,12 @@ void UbloxNode::initializeRosDiagnostics() {
     components_[i]->initializeRosDiagnostics();
 }
 
-void UbloxNode::processMonVer() {
+bool UbloxNode::processMonVer() {
   ublox_msgs::MonVER monVer;
-  if (!gps.poll(monVer))
-    throw std::runtime_error("Failed to poll MonVER & set relevant settings");
+  if (!gps.poll(monVer)) {
+    ROS_WARN("Failed to poll MonVER & set relevant settings");
+    return false;
+  }
 
   ROS_DEBUG("%s, HW VER: %s", monVer.swVersion.c_array(),
             monVer.hwVersion.c_array());
@@ -439,6 +445,8 @@ void UbloxNode::processMonVer() {
       }
     }
   }
+
+  return true;
 }
 
 bool UbloxNode::configureUblox() {
@@ -578,7 +586,11 @@ void UbloxNode::initialize() {
   getRosParams();
   initializeIo();
   // Must process Mon VER before setting firmware/hardware params
-  processMonVer();
+  while (!processMonVer()) {
+    const int resetWait = kResetWait;
+    boost::posix_time::seconds wait(resetWait);
+    boost::this_thread::sleep(wait);
+  }
   if (protocol_version_ <= 14) {
     if (nh->param("raw_data", false))
       components_.push_back(ComponentPtr(new RawDataProduct));
@@ -639,7 +651,7 @@ bool UbloxNode::configureMonitor() {
 void UbloxNode::callbackDataReceived(const int8_t err, const std::string &msg) {
   receive_status_ = err;
   receive_status_msg_ = msg;
-  if (updater.get()) updater->update();
+  if (sensor_diag_updater.get()) sensor_diag_updater->update();
 }
 
 void UbloxNode::callbackNavStatus(const ublox_msgs::NavSTATUS &m) {
@@ -650,7 +662,7 @@ void UbloxNode::callbackNavStatus(const ublox_msgs::NavSTATUS &m) {
   }
   last_nav_status_ = m;
   ++nav_status_count_;
-  updater->update();
+  sensor_diag_updater->update();
 }
 
 void UbloxNode::callbackMonComms(const ublox_msgs::MonCOMMS &m) {
@@ -661,7 +673,7 @@ void UbloxNode::callbackMonComms(const ublox_msgs::MonCOMMS &m) {
   }
   last_mon_comms_ = m;
   ++mon_comms_count_;
-  updater->update();
+  sensor_diag_updater->update();
 }
 
 void UbloxNode::checkGnssData(
@@ -683,7 +695,7 @@ void UbloxNode::checkSpoofingStatus(
   int level = diagnostic_msgs::DiagnosticStatus::OK;
 
   if (nav_status_count_ <= 0) {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not Received");
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
     return;
   }
 
@@ -702,7 +714,7 @@ void UbloxNode::checkTxUsage(
   int whole_level = diagnostic_msgs::DiagnosticStatus::OK;
 
   if (mon_comms_count_ <= 0) {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not Received");
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
     return;
   }
 
@@ -1373,8 +1385,10 @@ void UbloxFirmware8::subscribe() {
 void UbloxFirmware8::initializeRosDiagnostics() {
   // Add the fix diagnostics to the updater
   UbloxFirmware::initializeRosDiagnostics();
-  updater->add("gnss_antenna", this, &UbloxFirmware8::checkAntennaStatus);
-  updater->add("gnss_jamming", this, &UbloxFirmware8::checkJammingStatus);
+  sensor_diag_updater->add("gnss_antenna", this,
+                           &UbloxFirmware8::checkAntennaStatus);
+  sensor_diag_updater->add("gnss_jamming", this,
+                           &UbloxFirmware8::checkJammingStatus);
   mon_hw_count_ = 0;
 }
 
@@ -1387,7 +1401,7 @@ void UbloxFirmware8::callbackMonHW(const ublox_msgs::MonHW &m) {
 
   last_mon_hw_ = m;
   ++mon_hw_count_;
-  updater->update();
+  sensor_diag_updater->update();
 }
 
 void UbloxFirmware8::checkAntennaStatus(
@@ -1395,7 +1409,7 @@ void UbloxFirmware8::checkAntennaStatus(
   int level = diagnostic_msgs::DiagnosticStatus::OK;
 
   if (mon_hw_count_ <= 0) {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not Received");
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
     return;
   }
 
@@ -1412,7 +1426,7 @@ void UbloxFirmware8::checkJammingStatus(
   int level = diagnostic_msgs::DiagnosticStatus::OK;
 
   if (mon_hw_count_ <= 0) {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::STALE, "Not Received");
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
     return;
   }
 
