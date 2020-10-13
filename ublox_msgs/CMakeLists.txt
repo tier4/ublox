@@ -103,17 +103,26 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     std_msgs
 )
 
-include_directories(include)
+# Generate library target
 add_library(${PROJECT_NAME}_lib SHARED src/ublox_msgs.cpp)
 ament_target_dependencies(${PROJECT_NAME}_lib
   "ublox_serialization"
 )
+target_include_directories(${PROJECT_NAME}_lib
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+### Install library
 rosidl_target_interfaces(${PROJECT_NAME}_lib ${PROJECT_NAME} "rosidl_typesupport_cpp")
+ament_export_targets(${PROJECT_NAME}_lib HAS_LIBRARY_TARGET)
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME}_lib)
 ament_export_dependencies(rosidl_default_runtime std_msgs sensor_msgs ublox_serialization)
 
 install(TARGETS ${PROJECT_NAME}_lib
+  EXPORT ${PROJECT_NAME}_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
