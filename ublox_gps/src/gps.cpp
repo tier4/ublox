@@ -586,10 +586,10 @@ bool Gps::setTimtm2(uint8_t rate) {
 }
 
 bool Gps::setAntennaDetection(bool enable) {
-  ROS_DEBUG("%s SCD/OCD", (enable ? "Enabling" : "Disabling"));
+  ROS_DEBUG("%s /SVCS/SCD/OCD", (enable ? "Enabling" : "Disabling"));
 
   ublox_msgs::CfgANT msg;
-  msg.flags = (enable ? (CfgANT::FLAGS_SCD | CfgANT::FLAGS_OCD) : 0);
+  msg.flags = (enable ? (CfgANT::FLAGS_SVCS | CfgANT::FLAGS_SCD | CfgANT::FLAGS_OCD) : 0);
   return configure(msg);
 }
 
