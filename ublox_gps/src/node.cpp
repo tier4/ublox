@@ -1662,6 +1662,8 @@ void AdrUdrProduct::callbackEsfMEAS(const ublox_msgs::EsfMEAS &m) {
 // u-blox High Precision GNSS Reference Station
 //
 void HpgRefProduct::getRosParams() {
+  disable_tmode3_ = false;
+
   if (config_on_startup_flag_) {
     if (nav_rate * meas_rate != 1000)
       ROS_WARN("For HPG Ref devices, nav_rate should be exactly 1 Hz.");
@@ -1701,9 +1703,8 @@ void HpgRefProduct::getRosParams() {
           std::string("tmode3 param invalid. See CfgTMODE3") +
           " flag constants for possible values.");
     }
-  }
-  else {
-    getRosUint("tmode3", tmode3_, 0u);
+  } else {
+    disable_tmode3_ = true;
   }
 }
 
@@ -1817,6 +1818,14 @@ void HpgRefProduct::initializeRosDiagnostics() {
 
 void HpgRefProduct::tmode3Diagnostics(
     diagnostic_updater::DiagnosticStatusWrapper &stat) {
+
+  if (disable_tmode3_) {
+    if (!gps.disableTmode3())
+      ROS_ERROR("Failed to disable TMODE3.");
+    mode_ = DISABLED;
+    disable_tmode3_ = false;
+  }
+
   if (mode_ == INIT) {
     stat.level = diagnostic_msgs::DiagnosticStatus::WARN;
     stat.message = "Not configured";

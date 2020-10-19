@@ -1396,6 +1396,9 @@ class HpgRefProduct : public virtual ComponentInterface {
   /*! This variable is used only if TMODE3 is set to survey-in. */
   float sv_in_acc_lim_;
 
+  //! Flag for disabling TMODE3
+  bool disable_tmode3_;
+
   //! Status of device time mode
   enum {
     INIT,       //!< Initialization mode (before configuration)
