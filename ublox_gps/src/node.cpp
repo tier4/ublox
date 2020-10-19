@@ -1432,8 +1432,10 @@ void UbloxFirmware8::checkJammingStatus(
 
   uint8_t state =
       last_mon_hw_.flags & ublox_msgs::MonHW::FLAGS_JAMMING_STATE_MASK;
-  if (state == ublox_msgs::MonHW::JAMMING_STATE_WARNING ||
-      state == ublox_msgs::MonHW::JAMMING_STATE_CRITICAL) {
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_WARNING) {
+    level = diagnostic_msgs::DiagnosticStatus::WARN;
+  }
+  else if(state == ublox_msgs::MonHW::JAMMING_STATE_CRITICAL) {
     level = diagnostic_msgs::DiagnosticStatus::ERROR;
   }
 
@@ -1699,6 +1701,9 @@ void HpgRefProduct::getRosParams() {
           std::string("tmode3 param invalid. See CfgTMODE3") +
           " flag constants for possible values.");
     }
+  }
+  else {
+    getRosUint("tmode3", tmode3_, 0u);
   }
 }
 
