@@ -256,7 +256,7 @@ void UbloxNode::pollMessages(const ros::TimerEvent &event) {
 
 void UbloxNode::printInf(const ublox_msgs::Inf &m, uint8_t id) {
   if (id == ublox_msgs::Message::INF::ERROR)
-    ROS_ERROR_STREAM("INF: " << std::string(m.str.begin(), m.str.end()));
+    ROS_WARN_STREAM("INF: " << std::string(m.str.begin(), m.str.end()));
   else if (id == ublox_msgs::Message::INF::WARNING)
     ROS_WARN_STREAM("INF: " << std::string(m.str.begin(), m.str.end()));
   else if (id == ublox_msgs::Message::INF::DEBUG)
@@ -491,10 +491,10 @@ bool UbloxNode::configureUblox() {
       ROS_DEBUG("Saving the u-blox configuration, mask %u, device %u",
                 save_.saveMask, save_.deviceMask);
       if (!gps.configure(save_))
-        ROS_ERROR("u-blox unable to save configuration to non-volatile memory");
+        ROS_WARN("u-blox unable to save configuration to non-volatile memory");
     }
   } catch (std::exception &e) {
-    ROS_FATAL("Error configuring u-blox: %s", e.what());
+    ROS_WARN("Error configuring u-blox: %s", e.what());
     return false;
   }
   return true;
@@ -1127,7 +1127,7 @@ void UbloxFirmware8::getRosParams() {
 bool UbloxFirmware8::configureUblox() {
   if (clear_bbr_) {
     // clear flash memory
-    if (!gps.clearBbr()) ROS_ERROR("u-blox failed to clear flash memory");
+    if (!gps.clearBbr()) ROS_WARN("u-blox failed to clear flash memory");
   }
   //
   // Configure the GNSS, only if the configuration is different
@@ -1557,7 +1557,7 @@ bool HpgRefProduct::configureUblox() {
                                "before setting TMODE3 to survey-in.");
     // As recommended in the documentation, first disable, then set to survey in
     if (!gps.disableTmode3())
-      ROS_ERROR("Failed to disable TMODE3 before setting to survey-in.");
+      ROS_WARN("Failed to disable TMODE3 before setting to survey-in.");
     else
       mode_ = DISABLED;
     // Set to Survey in mode
@@ -1599,11 +1599,11 @@ bool HpgRefProduct::setTimeMode() {
   // Set the Measurement & nav rate to user config
   // (survey-in sets nav_rate to 1 Hz regardless of user setting)
   if (!gps.configRate(meas_rate, nav_rate))
-    ROS_ERROR("Failed to set measurement rate to %d ms %s %d", meas_rate,
+    ROS_WARN("Failed to set measurement rate to %d ms %s %d", meas_rate,
               "navigation rate to ", nav_rate);
   // Enable the RTCM out messages
   if (!gps.configRtcm(rtcm_ids, rtcm_rates)) {
-    ROS_ERROR("Failed to configure RTCM IDs");
+    ROS_WARN("Failed to configure RTCM IDs");
     return false;
   }
   return true;

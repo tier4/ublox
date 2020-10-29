@@ -521,7 +521,7 @@ bool Gps::configure(const ConfigT &message, bool wait) {
   std::vector<unsigned char> out(kWriterSize);
   ublox::Writer writer(out.data(), out.size());
   if (!writer.write(message)) {
-    ROS_ERROR("Failed to encode config message 0x%02x / 0x%02x",
+    ROS_WARN("Failed to encode config message 0x%02x / 0x%02x",
               message.CLASS_ID, message.MESSAGE_ID);
     return false;
   }

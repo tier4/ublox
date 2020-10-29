@@ -82,13 +82,13 @@ void RawDataStreamPa::initialize() {
   if (!file_dir_.empty()) {
     struct stat stat_info;
     if (stat(file_dir_.c_str(), &stat_info) != 0) {
-      ROS_ERROR(
+      ROS_WARN(
           "Can't log raw data to file. "
           "Directory \"%s\" does not exist.",
           file_dir_.c_str());
 
     } else if ((stat_info.st_mode & S_IFDIR) != S_IFDIR) {
-      ROS_ERROR(
+      ROS_WARN(
           "Can't log raw data to file. "
           "\"%s\" exists, but is not a directory.",
           file_dir_.c_str());
@@ -131,7 +131,7 @@ void RawDataStreamPa::initialize() {
         file_handle_.open(file_name_);
         ROS_INFO("Logging raw data to file \"%s\"", file_name_.c_str());
       } catch (const std::exception &e) {
-        ROS_ERROR(
+        ROS_WARN(
             "Can't log raw data to file. "
             "Can't create file \"%s\".",
             file_name_.c_str());
