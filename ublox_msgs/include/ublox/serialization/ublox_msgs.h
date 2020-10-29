@@ -114,7 +114,7 @@ struct Serializer<ublox_msgs::CfgGNSS_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.blocks.size() != m.numConfigBlocks) {
-      ROS_ERROR("CfgGNSS numConfigBlocks must equal blocks size");
+      ROS_WARN("CfgGNSS numConfigBlocks must equal blocks size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.msgVer);
@@ -252,7 +252,7 @@ struct Serializer<ublox_msgs::NavDGPS_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.sv.size() != m.numCh) {
-      ROS_ERROR("NavDGPS numCh must equal sv size");
+      ROS_WARN("NavDGPS numCh must equal sv size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.iTOW);
@@ -297,7 +297,7 @@ struct Serializer<ublox_msgs::NavSBAS_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.sv.size() != m.cnt) {
-      ROS_ERROR("NavSBAS cnt must equal sv size");
+      ROS_WARN("NavSBAS cnt must equal sv size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.iTOW);
@@ -339,7 +339,7 @@ struct Serializer<ublox_msgs::NavSAT_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.sv.size() != m.numSvs) {
-      ROS_ERROR("NavSAT numSvs must equal sv size");
+      ROS_WARN("NavSAT numSvs must equal sv size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.iTOW);
@@ -378,7 +378,7 @@ struct Serializer<ublox_msgs::NavSVINFO_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.sv.size() != m.numCh) {
-      ROS_ERROR("NavSVINFO numCh must equal sv size");
+      ROS_WARN("NavSVINFO numCh must equal sv size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.iTOW);
@@ -417,7 +417,7 @@ struct Serializer<ublox_msgs::RxmRAW_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.sv.size() != m.numSV) {
-      ROS_ERROR("RxmRAW numSV must equal sv size");
+      ROS_WARN("RxmRAW numSV must equal sv size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.rcvTOW);
@@ -459,7 +459,7 @@ struct Serializer<ublox_msgs::RxmRAWX_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.meas.size() != m.numMeas) {
-      ROS_ERROR("RxmRAWX numMeas must equal meas size");
+      ROS_WARN("RxmRAWX numMeas must equal meas size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.rcvTOW);
@@ -505,7 +505,7 @@ struct Serializer<ublox_msgs::RxmSFRBX_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.dwrd.size() != m.numWords) {
-      ROS_ERROR("RxmSFRBX numWords must equal dwrd size");
+      ROS_WARN("RxmSFRBX numWords must equal dwrd size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.gnssId);
@@ -548,7 +548,7 @@ struct Serializer<ublox_msgs::RxmSVSI_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.sv.size() != m.numSV) {
-      ROS_ERROR("RxmSVSI numSV must equal sv size");
+      ROS_WARN("RxmSVSI numSV must equal sv size");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.iTOW);
@@ -859,7 +859,7 @@ struct Serializer<ublox_msgs::EsfSTATUS_<ContainerAllocator> > {
   static void write(uint8_t *data, uint32_t size,
                     typename CallTraits::param_type m) {
     if (m.sens.size() != m.numSens) {
-      ROS_ERROR("Writing EsfSTATUS message: numSens must equal size of sens");
+      ROS_WARN("Writing EsfSTATUS message: numSens must equal size of sens");
     }
     ros::serialization::OStream stream(data, size);
     stream.next(m.iTOW);

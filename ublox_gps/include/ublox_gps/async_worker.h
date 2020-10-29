@@ -165,12 +165,12 @@ bool AsyncWorker<StreamT>::send(const unsigned char *data,
                                 const unsigned int size) {
   ScopedLock lock(write_mutex_);
   if (size == 0) {
-    ROS_ERROR("Ublox AsyncWorker::send: Size of message to send is 0");
+    ROS_WARN("Ublox AsyncWorker::send: Size of message to send is 0");
     return true;
   }
 
   if (out_.capacity() - out_.size() < size) {
-    ROS_ERROR(
+    ROS_WARN(
         "Ublox AsyncWorker::send: Output buffer too full to send message");
     return false;
   }
@@ -219,7 +219,7 @@ void AsyncWorker<StreamT>::readEnd(const boost::system::error_code &error,
                                    std::size_t bytes_transfered) {
   ScopedLock lock(read_mutex_);
   if (error) {
-    ROS_ERROR_THROTTLE(5.0, "U-Blox ASIO input buffer read error: %s, %li",
+    ROS_WARN_THROTTLE(5.0, "U-Blox ASIO input buffer read error: %s, %li",
               error.message().c_str(), bytes_transfered);
   } else if (bytes_transfered > 0) {
     in_buffer_size_ += bytes_transfered;
@@ -256,7 +256,7 @@ void AsyncWorker<StreamT>::doClose() {
   boost::system::error_code error;
   stream_->close(error);
   if (error)
-    ROS_ERROR_STREAM(
+    ROS_WARN_STREAM(
         "Error while closing the AsyncWorker stream: " << error.message());
 }
 

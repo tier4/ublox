@@ -346,7 +346,7 @@ class Writer {
     // Check for buffer overflow
     uint32_t length = Serializer<T>::serializedLength(message);
     if (size_ < length + options_.wrapper_length()) {
-      ROS_ERROR("u-blox write buffer overflow. Message %u / %u not written",
+      ROS_WARN("u-blox write buffer overflow. Message %u / %u not written",
                 class_id, message_id);
       return false;
     }
@@ -368,7 +368,7 @@ class Writer {
   bool write(const uint8_t *message, uint32_t length, uint8_t class_id,
              uint8_t message_id) {
     if (size_ < length + options_.wrapper_length()) {
-      ROS_ERROR("u-blox write buffer overflow. Message %u / %u not written",
+      ROS_WARN("u-blox write buffer overflow. Message %u / %u not written",
                 class_id, message_id);
       return false;
     }

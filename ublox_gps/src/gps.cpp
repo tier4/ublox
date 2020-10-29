@@ -100,7 +100,7 @@ void Gps::processNack(const ublox_msgs::Ack &m) {
   ack.msg_id = m.msgID;
   // store the ack atomically
   ack_.store(ack, boost::memory_order_seq_cst);
-  ROS_ERROR("U-blox: received NACK: 0x%02x / 0x%02x", m.clsID, m.msgID);
+  ROS_WARN("U-blox: received NACK: 0x%02x / 0x%02x", m.clsID, m.msgID);
 }
 
 void Gps::processUpdSosAck(const ublox_msgs::UpdSOS_Ack &m) {
@@ -113,7 +113,7 @@ void Gps::processUpdSosAck(const ublox_msgs::UpdSOS_Ack &m) {
     ack_.store(ack, boost::memory_order_seq_cst);
     ROS_DEBUG_COND(ack.type == ACK && debug >= 2,
                    "U-blox: received UPD SOS Backup ACK");
-    if (ack.type == NACK) ROS_ERROR("U-blox: received UPD SOS Backup NACK");
+    if (ack.type == NACK) ROS_WARN("U-blox: received UPD SOS Backup NACK");
   }
 }
 
@@ -205,12 +205,12 @@ void Gps::resetSerial(std::string port) {
   std::vector<uint8_t> payload;
   payload.push_back(CfgPRT::PORT_ID_UART1);
   if (!poll(CfgPRT::CLASS_ID, CfgPRT::MESSAGE_ID, payload)) {
-    ROS_ERROR("Resetting Serial Port: Could not poll UART1 CfgPRT");
+    ROS_WARN("Resetting Serial Port: Could not poll UART1 CfgPRT");
     return;
   }
   CfgPRT prt;
   if (!read(prt, default_timeout_)) {
-    ROS_ERROR("Resetting Serial Port: Could not read polled UART1 CfgPRT %s",
+    ROS_WARN("Resetting Serial Port: Could not read polled UART1 CfgPRT %s",
               "message");
     return;
   }
@@ -349,11 +349,11 @@ bool Gps::disableUart1(CfgPRT &prev_config) {
   std::vector<uint8_t> payload;
   payload.push_back(CfgPRT::PORT_ID_UART1);
   if (!poll(CfgPRT::CLASS_ID, CfgPRT::MESSAGE_ID, payload)) {
-    ROS_ERROR("disableUart: Could not poll UART1 CfgPRT");
+    ROS_WARN("disableUart: Could not poll UART1 CfgPRT");
     return false;
   }
   if (!read(prev_config, default_timeout_)) {
-    ROS_ERROR("disableUart: Could not read polled UART1 CfgPRT message");
+    ROS_WARN("disableUart: Could not read polled UART1 CfgPRT message");
     return false;
   }
   // Keep original settings, but disable in/out
@@ -398,7 +398,7 @@ bool Gps::configRtcm(std::vector<uint8_t> ids, std::vector<uint8_t> rates) {
   for (size_t i = 0; i < ids.size(); ++i) {
     ROS_DEBUG("Setting RTCM %d Rate %u", ids[i], rates[i]);
     if (!setRate(ublox_msgs::Class::RTCM, (uint8_t)ids[i], rates[i])) {
-      ROS_ERROR("Could not set RTCM %d to rate %u", ids[i], rates[i]);
+      ROS_WARN("Could not set RTCM %d to rate %u", ids[i], rates[i]);
       return false;
     }
   }
@@ -419,7 +419,7 @@ bool Gps::configTmode3Fixed(bool lla_flag, std::vector<float> arp_position,
                             std::vector<int8_t> arp_position_hp,
                             float fixed_pos_acc) {
   if (arp_position.size() != 3 || arp_position_hp.size() != 3) {
-    ROS_ERROR("Configuring TMODE3 to Fixed: size of position %s",
+    ROS_WARN("Configuring TMODE3 to Fixed: size of position %s",
               "& arp_position_hp args must be 3");
     return false;
   }
