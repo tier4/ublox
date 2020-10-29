@@ -219,7 +219,7 @@ void AsyncWorker<StreamT>::readEnd(const boost::system::error_code &error,
                                    std::size_t bytes_transfered) {
   ScopedLock lock(read_mutex_);
   if (error) {
-    ROS_ERROR("U-Blox ASIO input buffer read error: %s, %li",
+    ROS_ERROR_THROTTLE(5.0, "U-Blox ASIO input buffer read error: %s, %li",
               error.message().c_str(), bytes_transfered);
   } else if (bytes_transfered > 0) {
     in_buffer_size_ += bytes_transfered;
