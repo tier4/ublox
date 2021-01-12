@@ -452,12 +452,6 @@ bool UbloxNode::configureUblox() {
       if (set_usb_) {
         gps.configUsb(usb_tx_, usb_in_, usb_out_);
       }
-      if (!gps.configRate(meas_rate, nav_rate)) {
-        std::stringstream ss;
-        ss << "Failed to set measurement rate to " << meas_rate
-           << "ms and navigation rate to " << nav_rate;
-        throw std::runtime_error(ss.str());
-      }
       // If device doesn't have SBAS, will receive NACK (causes exception)
       if (supportsGnss("SBAS")) {
         if (!gps.configSbas(enable_sbas_, sbas_usage_, max_sbas_)) {
@@ -486,6 +480,12 @@ bool UbloxNode::configureUblox() {
       for (int i = 0; i < components_.size(); i++) {
         if (!components_[i]->configureUblox()) return false;
       }
+    }
+    if (!gps.configRate(meas_rate, nav_rate)) {
+      std::stringstream ss;
+      ss << "Failed to set measurement rate to " << meas_rate
+          << "ms and navigation rate to " << nav_rate;
+      throw std::runtime_error(ss.str());
     }
     if (save_.saveMask != 0) {
       ROS_DEBUG("Saving the u-blox configuration, mask %u, device %u",
