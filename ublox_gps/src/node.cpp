@@ -44,6 +44,7 @@
 //==============================================================================
 
 #include "ublox_gps/node.h"
+
 #include <cmath>
 #include <sstream>
 #include <string>
@@ -237,6 +238,9 @@ void UbloxNode::getRosParams() {
 
   // raw data stream logging
   rawDataStreamPa_.getRosParams();
+
+  nh->param<double>("tx_usage_warn", tx_usage_warn_, 0.95);
+  nh->param<double>("tx_usage_error", tx_usage_error_, 1.0);
 }
 
 void UbloxNode::pollMessages(const ros::TimerEvent &event) {
@@ -277,10 +281,8 @@ void UbloxNode::subscribe() {
 
   // Nav Messages
   nh->param("publish/nav/status", enabled["nav_status"], enabled["nav"]);
-  if (enabled["nav_status"])
-    gps.subscribe<ublox_msgs::NavSTATUS>(
-        boost::bind(publish<ublox_msgs::NavSTATUS>, _1, "navstatus"),
-        kSubscribeRate);
+  gps.subscribe<ublox_msgs::NavSTATUS>(
+      boost::bind(&UbloxNode::callbackNavStatus, this, _1), kSubscribeRate);
 
   nh->param("publish/nav/posecef", enabled["nav_posecef"], enabled["nav"]);
   if (enabled["nav_posecef"])
@@ -346,6 +348,11 @@ void UbloxNode::subscribe() {
     gps.subscribe<ublox_msgs::AidHUI>(
         boost::bind(publish<ublox_msgs::AidHUI>, _1, "aidhui"), kSubscribeRate);
 
+  // Mon messages
+  nh->param("publish/mon/comms", enabled["mon_comms"], enabled["mon"]);
+  gps.subscribe<ublox_msgs::MonCOMMS>(
+      boost::bind(&UbloxNode::callbackMonComms, this, _1), kSubscribeRate);
+
   for (int i = 0; i < components_.size(); i++) components_[i]->subscribe();
 }
 
@@ -356,6 +363,17 @@ void UbloxNode::initializeRosDiagnostics() {
   updater.reset(new diagnostic_updater::Updater());
   updater->setHardwareID("ublox");
 
+  sensor_diag_updater.reset(new diagnostic_updater::Updater());
+  sensor_diag_updater->setHardwareID("ublox");
+
+  sensor_diag_updater->add("gnss_data", this, &UbloxNode::checkGnssData);
+  sensor_diag_updater->add("gnss_spoofing", this,
+                           &UbloxNode::checkSpoofingStatus);
+  sensor_diag_updater->add("gnss_tx_usage", this, &UbloxNode::checkTxUsage);
+
+  mon_comms_count_ = 0;
+  nav_status_count_ = 0;
+
   // configure diagnostic updater for frequency
   freq_diag.reset(new FixDiagnostic(std::string("fix"), kFixFreqTol,
                                     kFixFreqWindow, kTimeStampStatusMin));
@@ -363,10 +381,12 @@ void UbloxNode::initializeRosDiagnostics() {
     components_[i]->initializeRosDiagnostics();
 }
 
-void UbloxNode::processMonVer() {
+bool UbloxNode::processMonVer() {
   ublox_msgs::MonVER monVer;
-  if (!gps.poll(monVer))
-    throw std::runtime_error("Failed to poll MonVER & set relevant settings");
+  if (!gps.poll(monVer)) {
+    ROS_WARN("Failed to poll MonVER & set relevant settings");
+    return false;
+  }
 
   ROS_DEBUG("%s, HW VER: %s", monVer.swVersion.c_array(),
             monVer.hwVersion.c_array());
@@ -425,6 +445,8 @@ void UbloxNode::processMonVer() {
       }
     }
   }
+
+  return true;
 }
 
 bool UbloxNode::configureUblox() {
@@ -531,6 +553,8 @@ void UbloxNode::configureInf() {
 
 void UbloxNode::initializeIo() {
   gps.setConfigOnStartup(config_on_startup_flag_);
+  gps.subscribeDataReceived(
+      boost::bind(&UbloxNode::callbackDataReceived, this, _1, _2));
 
   boost::smatch match;
   if (boost::regex_match(device_, match,
@@ -562,7 +586,11 @@ void UbloxNode::initialize() {
   getRosParams();
   initializeIo();
   // Must process Mon VER before setting firmware/hardware params
-  processMonVer();
+  while (!processMonVer()) {
+    const int resetWait = kResetWait;
+    boost::posix_time::seconds wait(resetWait);
+    boost::this_thread::sleep(wait);
+  }
   if (protocol_version_ <= 14) {
     if (nh->param("raw_data", false))
       components_.push_back(ComponentPtr(new RawDataProduct));
@@ -578,6 +606,8 @@ void UbloxNode::initialize() {
     subscribe();
     // Configure INF messages (needs INF params, call after subscribing)
     configureInf();
+    // Configure for monitoring
+    configureMonitor();
 
     ros::Timer poller;
     poller = nh->createTimer(ros::Duration(kPollDuration),
@@ -593,6 +623,115 @@ void UbloxNode::shutdown() {
     gps.close();
     ROS_INFO("Closed connection to %s.", device_.c_str());
   }
+}
+
+bool UbloxNode::configureMonitor() {
+  nh->param("config/ant", enabled["cfg_ant"], true);
+  if (enabled["cfg_ant"]) {
+    if (!gps.setAntennaDetection(true))
+      throw std::runtime_error(
+          std::string("Failed to Enable open/short circuit detection"));
+  }
+  nh->param("config/itfm", enabled["cfg_itfm"], true);
+  if (enabled["cfg_itfm"]) {
+    bool enable;
+    bool enable2;
+    uint8_t bbThreshold = 3, cwThreshold = 15, antSetting = 0;
+    nh->param("itfm/enable", enable, true);
+    getRosUint("itfm/bb_threshold", bbThreshold);
+    getRosUint("itfm/cw_threshold", cwThreshold);
+    nh->param("itfm/enable2", enable2, false);
+    getRosUint("itfm/ant_setting", antSetting);
+    if (!gps.configItfm(enable, bbThreshold, cwThreshold, enable2, antSetting))
+      throw std::runtime_error(
+          std::string("Failed to Enable Jamming/Interference Monitor"));
+  }
+}
+
+void UbloxNode::callbackDataReceived(const int8_t err, const std::string &msg) {
+  receive_status_ = err;
+  receive_status_msg_ = msg;
+  if (sensor_diag_updater.get()) sensor_diag_updater->update();
+}
+
+void UbloxNode::callbackNavStatus(const ublox_msgs::NavSTATUS &m) {
+  if (enabled["nav_status"]) {
+    static ros::Publisher publisher =
+        nh->advertise<ublox_msgs::NavSTATUS>("navstatus", kROSQueueSize);
+    publisher.publish(m);
+  }
+  last_nav_status_ = m;
+  ++nav_status_count_;
+  sensor_diag_updater->update();
+}
+
+void UbloxNode::callbackMonComms(const ublox_msgs::MonCOMMS &m) {
+  if (enabled["mon_comms"]) {
+    static ros::Publisher publisher =
+        nh->advertise<ublox_msgs::MonCOMMS>("moncomms", kROSQueueSize);
+    publisher.publish(m);
+  }
+  last_mon_comms_ = m;
+  ++mon_comms_count_;
+  sensor_diag_updater->update();
+}
+
+void UbloxNode::checkGnssData(
+    diagnostic_updater::DiagnosticStatusWrapper &stat) {
+  int level = diagnostic_msgs::DiagnosticStatus::OK;
+  std::string msg = "OK";
+
+  // IO Error occurred
+  if (receive_status_ != 0) {
+    level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    msg = receive_status_msg_;
+  }
+
+  stat.summary(level, msg);
+}
+
+void UbloxNode::checkSpoofingStatus(
+    diagnostic_updater::DiagnosticStatusWrapper &stat) {
+  int level = diagnostic_msgs::DiagnosticStatus::OK;
+
+  if (nav_status_count_ <= 0) {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
+    return;
+  }
+
+  const uint8_t state = last_nav_status_.flags2 &
+                        ublox_msgs::NavSTATUS::FLAGS2_SPOOF_DET_STATE_MASK;
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_SPOOFING ||
+      state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_MULTIPLE) {
+    level = diagnostic_msgs::DiagnosticStatus::ERROR;
+  }
+
+  stat.summary(level, spoofDetStateToString(state));
+}
+
+void UbloxNode::checkTxUsage(
+    diagnostic_updater::DiagnosticStatusWrapper &stat) {
+  int whole_level = diagnostic_msgs::DiagnosticStatus::OK;
+
+  if (mon_comms_count_ <= 0) {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
+    return;
+  }
+
+  for (const auto &p : last_mon_comms_.ports) {
+    const double d = p.txUsage * 1e-2;
+
+    int level = diagnostic_msgs::DiagnosticStatus::OK;
+    if (d >= tx_usage_error_)
+      level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    else if (d >= tx_usage_warn_)
+      level = diagnostic_msgs::DiagnosticStatus::WARN;
+
+    whole_level = std::max(whole_level, level);
+    stat.addf(portIdToString(p.portId), "%d.00%%", p.txUsage);
+  }
+
+  stat.summary(whole_level, usage_dict_.at(whole_level));
 }
 
 //
@@ -1232,9 +1371,8 @@ void UbloxFirmware8::subscribe() {
 
   // Subscribe to Mon HW
   nh->param("publish/mon/hw", enabled["mon_hw"], enabled["mon"]);
-  if (enabled["mon_hw"])
-    gps.subscribe<ublox_msgs::MonHW>(
-        boost::bind(publish<ublox_msgs::MonHW>, _1, "monhw"), kSubscribeRate);
+  gps.subscribe<ublox_msgs::MonHW>(
+      boost::bind(&UbloxFirmware8::callbackMonHW, this, _1), kSubscribeRate);
 
   // Subscribe to RTCM messages
   nh->param("publish/rxm/rtcm", enabled["rxm_rtcm"], enabled["rxm"]);
@@ -1242,6 +1380,66 @@ void UbloxFirmware8::subscribe() {
     gps.subscribe<ublox_msgs::RxmRTCM>(
         boost::bind(publish<ublox_msgs::RxmRTCM>, _1, "rxmrtcm"),
         kSubscribeRate);
+}
+
+void UbloxFirmware8::initializeRosDiagnostics() {
+  // Add the fix diagnostics to the updater
+  UbloxFirmware::initializeRosDiagnostics();
+  sensor_diag_updater->add("gnss_antenna", this,
+                           &UbloxFirmware8::checkAntennaStatus);
+  sensor_diag_updater->add("gnss_jamming", this,
+                           &UbloxFirmware8::checkJammingStatus);
+  mon_hw_count_ = 0;
+}
+
+void UbloxFirmware8::callbackMonHW(const ublox_msgs::MonHW &m) {
+  if (enabled["mon_hw"]) {
+    static ros::Publisher publisher =
+        nh->advertise<ublox_msgs::MonHW>("monhw", kROSQueueSize);
+    publisher.publish(m);
+  }
+
+  last_mon_hw_ = m;
+  ++mon_hw_count_;
+  sensor_diag_updater->update();
+}
+
+void UbloxFirmware8::checkAntennaStatus(
+    diagnostic_updater::DiagnosticStatusWrapper &stat) {
+  int level = diagnostic_msgs::DiagnosticStatus::OK;
+
+  if (mon_hw_count_ <= 0) {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
+    return;
+  }
+
+  if (last_mon_hw_.aStatus == ublox_msgs::MonHW::A_STATUS_SHORT ||
+      last_mon_hw_.aStatus == ublox_msgs::MonHW::A_STATUS_OPEN) {
+    level = diagnostic_msgs::DiagnosticStatus::ERROR;
+  }
+
+  stat.summary(level, aStatusToString(last_mon_hw_.aStatus));
+}
+
+void UbloxFirmware8::checkJammingStatus(
+    diagnostic_updater::DiagnosticStatusWrapper &stat) {
+  int level = diagnostic_msgs::DiagnosticStatus::OK;
+
+  if (mon_hw_count_ <= 0) {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Not Received");
+    return;
+  }
+
+  uint8_t state =
+      last_mon_hw_.flags & ublox_msgs::MonHW::FLAGS_JAMMING_STATE_MASK;
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_WARNING) {
+    level = diagnostic_msgs::DiagnosticStatus::WARN;
+  }
+  else if(state == ublox_msgs::MonHW::JAMMING_STATE_CRITICAL) {
+    level = diagnostic_msgs::DiagnosticStatus::ERROR;
+  }
+
+  stat.summary(level, jammingStateToString(state));
 }
 
 //
@@ -1464,6 +1662,8 @@ void AdrUdrProduct::callbackEsfMEAS(const ublox_msgs::EsfMEAS &m) {
 // u-blox High Precision GNSS Reference Station
 //
 void HpgRefProduct::getRosParams() {
+  disable_tmode3_ = false;
+
   if (config_on_startup_flag_) {
     if (nav_rate * meas_rate != 1000)
       ROS_WARN("For HPG Ref devices, nav_rate should be exactly 1 Hz.");
@@ -1503,6 +1703,8 @@ void HpgRefProduct::getRosParams() {
           std::string("tmode3 param invalid. See CfgTMODE3") +
           " flag constants for possible values.");
     }
+  } else {
+    disable_tmode3_ = true;
   }
 }
 
@@ -1616,6 +1818,14 @@ void HpgRefProduct::initializeRosDiagnostics() {
 
 void HpgRefProduct::tmode3Diagnostics(
     diagnostic_updater::DiagnosticStatusWrapper &stat) {
+
+  if (disable_tmode3_) {
+    if (!gps.disableTmode3())
+      ROS_ERROR("Failed to disable TMODE3.");
+    mode_ = DISABLED;
+    disable_tmode3_ = false;
+  }
+
   if (mode_ == INIT) {
     stat.level = diagnostic_msgs::DiagnosticStatus::WARN;
     stat.message = "Not configured";

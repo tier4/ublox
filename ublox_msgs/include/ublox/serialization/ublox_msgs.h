@@ -183,6 +183,48 @@ struct Serializer<ublox_msgs::Inf_<ContainerAllocator> > {
   }
 };
 
+//
+/// @brief Serializes the MonCOMMS message which has a repeated block.
+///
+template <typename ContainerAllocator>
+struct Serializer<ublox_msgs::MonCOMMS_<ContainerAllocator> > {
+  typedef ublox_msgs::MonCOMMS_<ContainerAllocator> Msg;
+  typedef boost::call_traits<Msg> CallTraits;
+
+  static void read(const uint8_t *data, uint32_t count,
+                   typename CallTraits::reference m) {
+    ros::serialization::IStream stream(const_cast<uint8_t *>(data), count);
+    stream.next(m.version);
+    stream.next(m.nPorts);
+    stream.next(m.txErrors);
+    stream.next(m.reserved1);
+    stream.next(m.protIds);
+    m.ports.resize(m.nPorts);
+    for (std::size_t i = 0; i < m.ports.size(); ++i)
+      ros::serialization::deserialize(stream, m.ports[i]);
+  }
+
+  static uint32_t serializedLength(typename CallTraits::param_type m) {
+    return 8 + 40 * m.nPorts;
+  }
+
+  static void write(uint8_t *data, uint32_t size,
+                    typename CallTraits::param_type m) {
+    if (m.ports.size() != m.nPorts) {
+      ROS_ERROR("Writing MonCOMMS message: numSens must equal size of sens");
+    }
+    ros::serialization::OStream stream(data, size);
+    stream.next(m.version);
+    stream.next(m.nPorts);
+    stream.next(m.txErrors);
+    stream.next(m.reserved1);
+    stream.next(m.protIds);
+    stream.next(static_cast<typename Msg::_ports_type>(m.ports.size()));
+    for (std::size_t i = 0; i < m.ports.size(); ++i)
+      ros::serialization::serialize(stream, m.ports[i]);
+  }
+};
+
 ///
 /// @brief Serializes the MonVER message which has a repeated block.
 ///

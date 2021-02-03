@@ -314,6 +314,25 @@ class Gps {
   bool setTimtm2(uint8_t rate);
 
   /**
+   * @brief Enable open/short circuit detection.
+   * @param enable If true, enable open/short circuit detection.
+   * @return true on ACK, false on other conditions.
+   */
+  bool setAntennaDetection(bool enable);
+
+  /**
+   * @brief Configure Jamming/Interference monitor.
+   * @param enable enable interference detection
+   * @param bbThreshold Broadband jamming detection threshold (unit = dB)
+   * @param cwThreshold CW jamming detection threshold (unit = dB)
+   * @param enable2 enable interference detection for extra settings
+   * @param antennaSetting 0=unknown, 1=passive, 2=active
+   * @return true on ACK, false on other conditions.
+   */
+  bool configItfm(bool enable, uint8_t bbThreshold, uint8_t cwThreshold,
+                  bool enable2, uint8_t antSetting);
+
+  /**
    * @brief Configure the U-Blox send rate of the message & subscribe to the
    * given message
    * @param the callback handler for the message
@@ -339,6 +358,12 @@ class Gps {
   template <typename T>
   void subscribeId(typename CallbackHandler_<T>::Callback callback,
                    unsigned int message_id);
+
+  /**
+   * @brief Subscribe to data received.
+   * @param the callback handler for data received
+   */
+  void subscribeDataReceived(ublox::Reader::Callback callback);
 
   /**
    * Read a u-blox message of the given type.
@@ -493,6 +518,10 @@ template <typename T>
 void Gps::subscribeId(typename CallbackHandler_<T>::Callback callback,
                       unsigned int message_id) {
   callbacks_.insert<T>(callback, message_id);
+}
+
+void Gps::subscribeDataReceived(ublox::Reader::Callback callback) {
+  callbacks_.setCallback(callback);
 }
 
 template <typename ConfigT>

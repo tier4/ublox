@@ -31,7 +31,9 @@
 #define UBLOX_GPS_NODE_H
 
 // STL
+#include <map>
 #include <set>
+#include <string>
 #include <vector>
 // Boost
 #include <boost/algorithm/string.hpp>
@@ -96,6 +98,8 @@ constexpr static uint32_t kNavSvInfoSubscribeRate = 20;
 // ROS objects
 //! ROS diagnostic updater
 boost::shared_ptr<diagnostic_updater::Updater> updater;
+//! ROS diagnostic updater for sensor diagnostics
+boost::shared_ptr<diagnostic_updater::Updater> sensor_diag_updater;
 //! Node Handle for GPS node
 boost::shared_ptr<ros::NodeHandle> nh;
 
@@ -245,6 +249,70 @@ uint8_t modelFromString(const std::string &model);
  * @throws std::runtime_error on invalid argument.
  */
 uint8_t fixModeFromString(const std::string &mode);
+
+/**
+ * @brief Get text from aStatus in UBX-MON-HW.
+ * @param state aStatus in UBX-MON-HW
+ * @return text of aStatus
+ */
+inline std::string aStatusToString(const uint8_t state) {
+  if (state == ublox_msgs::MonHW::A_STATUS_INIT) return "Init";
+  if (state == ublox_msgs::MonHW::A_STATUS_UNKNOWN) return "Don't know";
+  if (state == ublox_msgs::MonHW::A_STATUS_OK) return "OK";
+  if (state == ublox_msgs::MonHW::A_STATUS_SHORT) return "Short";
+  if (state == ublox_msgs::MonHW::A_STATUS_OPEN) return "Open";
+
+  return "???";
+}
+
+/**
+ * @brief Get text from jammingState in UBX-MON-HW.
+ * @param state jammingState in UBX-MON-HW
+ * @return text of jammingState
+ */
+inline std::string jammingStateToString(const uint8_t state) {
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_UNKNOWN_OR_DISABLED)
+    return "Unknown or feature disabled";
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_OK) return "OK";
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_WARNING) return "Warning";
+  if (state == ublox_msgs::MonHW::JAMMING_STATE_CRITICAL) return "Critical";
+  if (state == ublox_msgs::MonHW::A_STATUS_OPEN) return "Open";
+
+  return "???";
+}
+
+/**
+ * @brief Get text from portId in UBX-MON-COMMS.
+ * @param portId portId in UBX-MON-COMMS
+ * @return text of portId
+ */
+inline std::string portIdToString(const uint16_t portId) {
+  if (portId == 0x0000) return "I2C";
+  if (portId == 0x0001) return "UART1";
+  if (portId == 0x0002) return "UART2";
+  if (portId == 0x0003) return "USB";
+  if (portId == 0x0004) return "SPI";
+
+  return "???";
+}
+
+/**
+ * @brief Get text from spoofDetState in UBX-NAV-STATUS.
+ * @param state spoofDetState in UBX-NAV-STATUS
+ * @return text of spoofDetState
+ */
+inline std::string spoofDetStateToString(const uint8_t state) {
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_UNKNOWN)
+    return "Unknown or deactivated";
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_NONE)
+    return "No spoofing indicated";
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_SPOOFING)
+    return "Spoofing indicated";
+  if (state == ublox_msgs::NavSTATUS::SPOOF_DET_STATE_MULTIPLE)
+    return "Multiple spoofing indications";
+
+  return "???";
+}
 
 /**
  * @brief Check that the parameter is above the minimum.
@@ -548,10 +616,10 @@ class UbloxNode : public virtual ComponentInterface {
 
   /**
    * @brief Process the MonVer message and add firmware and product components.
-   *
+   * @return true if processed the MonVer message successfully
    * @details Determines the protocol version, product type and supported GNSS.
    */
-  void processMonVer();
+  bool processMonVer();
 
   /**
    * @brief Add the interface for firmware specific configuration, subscribers,
@@ -579,6 +647,54 @@ class UbloxNode : public virtual ComponentInterface {
    * @brief Configure INF messages, call after subscribe.
    */
   void configureInf();
+
+  /**
+   * @brief Configure for monitoring.
+   * @return true if configured successfully
+   */
+  bool configureMonitor();
+
+  /**
+   * @brief A callback function to receive data
+   * @param err error code
+   * @param msg error message
+   */
+  void callbackDataReceived(const int8_t err, const std::string &msg);
+
+  /**
+   * @brief Publish the navigation status and call the diagnostic
+   * updater.
+   * @param m [in] the message to process
+   */
+  void callbackNavStatus(const ublox_msgs::NavSTATUS &m);
+
+  /**
+   * @brief Publish the comm port information and call the diagnostic
+   * updater.
+   * @param m [in] the message to process
+   */
+  void callbackMonComms(const ublox_msgs::MonCOMMS &m);
+
+  /**
+   * @brief check GNSS data
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkGnssData(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief check Spoofing status
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkSpoofingStatus(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief check Tx Usage
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkTxUsage(diagnostic_updater::DiagnosticStatusWrapper &stat);
 
   //! The u-blox node components
   /*!
@@ -640,6 +756,34 @@ class UbloxNode : public virtual ComponentInterface {
 
   //! raw data stream logging
   RawDataStreamPa rawDataStreamPa_;
+
+  //! txUsage(%) to generate warning
+  double tx_usage_warn_;
+  //! txUsage(%) to generate error
+  double tx_usage_error_;
+
+  //! The last received navigation status
+  ublox_msgs::NavSTATUS last_nav_status_;
+  //! The last received comm port information
+  ublox_msgs::MonCOMMS last_mon_comms_;
+
+  //! counter of received UBX-NAV-STATUS
+  uint64_t nav_status_count_;
+  //! counter of received UBX-MON-HW
+  uint64_t mon_comms_count_;
+
+  //! receive status
+  int8_t receive_status_;
+  //! receive status message
+  std::string receive_status_msg_;
+
+  /**
+   * @brief Usage status messages
+   */
+  const std::map<int, const char *> usage_dict_ = {
+      {diagnostic_msgs::DiagnosticStatus::OK, "OK"},
+      {diagnostic_msgs::DiagnosticStatus::WARN, "High load"},
+      {diagnostic_msgs::DiagnosticStatus::ERROR, "Very high load"}};
 };
 
 /**
@@ -981,7 +1125,33 @@ class UbloxFirmware8 : public UbloxFirmware7Plus<ublox_msgs::NavPVT> {
    */
   void subscribe();
 
+  /**
+   * @brief Add the diagnostics to the updater.
+   */
+  void initializeRosDiagnostics();
+
  private:
+  /**
+   * @brief Publish the hardware status and call the diagnostic
+   * updater.
+   * @param m [in] the message to process
+   */
+  void callbackMonHW(const ublox_msgs::MonHW &m);
+
+  /**
+   * @brief check Antenna status
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkAntennaStatus(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief check Jamming status
+   * @param [out] stat diagnostic message passed directly to diagnostic publish
+   * calls
+   */
+  void checkJammingStatus(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
   // Set from ROS parameters
   //! Whether or not to enable the Galileo GNSS
   bool enable_galileo_;
@@ -995,6 +1165,11 @@ class UbloxFirmware8 : public UbloxFirmware7Plus<ublox_msgs::NavPVT> {
   ublox_msgs::CfgNMEA cfg_nmea_;
   //! Whether to clear the flash memory during configuration
   bool clear_bbr_;
+
+  //! The last received hardwre status
+  ublox_msgs::MonHW last_mon_hw_;
+  //! counter of received UBX-MON-HW
+  uint64_t mon_hw_count_;
 };
 
 /**
@@ -1220,6 +1395,9 @@ class HpgRefProduct : public virtual ComponentInterface {
   //! Survey in accuracy limit [m]
   /*! This variable is used only if TMODE3 is set to survey-in. */
   float sv_in_acc_lim_;
+
+  //! Flag for disabling TMODE3
+  bool disable_tmode3_;
 
   //! Status of device time mode
   enum {

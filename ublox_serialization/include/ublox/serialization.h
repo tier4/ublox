@@ -33,6 +33,8 @@
 #include <stdint.h>
 #include <algorithm>
 #include <boost/call_traits.hpp>
+#include <boost/function.hpp>
+#include <string>
 #include <vector>
 
 #include "checksum.h"
@@ -173,7 +175,11 @@ class Reader {
    */
   Reader(const uint8_t *data, uint32_t count,
          const Options &options = Options())
-      : data_(data), count_(count), found_(false), options_(options) {}
+      : data_(data),
+        count_(count),
+        found_(false),
+        options_(options),
+        func_(Callback()) {}
 
   typedef const uint8_t *iterator;
 
@@ -261,6 +267,14 @@ class Reader {
                                                length());
   }
 
+  typedef boost::function<void(int8_t err, const std::string &msg)> Callback;
+
+  /**
+   * @brief Set a callback function to pass IO error
+   * @param func a callback function to pass IO error
+   */
+  void setCallback(const Callback &func) { func_ = func; }
+
   /**
    * @brief Decode the given message.
    * @param message the output message
@@ -278,10 +292,12 @@ class Reader {
       // checksum error
       ROS_DEBUG("U-Blox read checksum error: 0x%02x / 0x%02x", classId(),
                 messageId());
+      if (func_) func_(EPROTO, "Checksum Error");
       return false;
     }
 
     Serializer<T>::read(data_ + options_.header_length, length(), message);
+    if (func_) func_(0, "OK");
     return true;
   }
 
@@ -315,6 +331,8 @@ class Reader {
   bool found_;
   //! Options representing the sync char values, etc.
   Options options_;
+  //! A callback function to pass IO error
+  Callback func_;
 };
 
 /**

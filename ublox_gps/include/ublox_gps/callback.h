@@ -67,7 +67,7 @@ class CallbackHandler {
 template <typename T>
 class CallbackHandler_ : public CallbackHandler {
  public:
-  typedef boost::function<void(const T &)> Callback;  //!< A callback function
+  using Callback = boost::function<void(const T &)>;  //!< A callback function
 
   /**
    * @brief Initialize the Callback Handler with a callback function
@@ -131,6 +131,12 @@ class CallbackHandlers {
         std::make_pair(std::make_pair(T::CLASS_ID, T::MESSAGE_ID),
                        boost::shared_ptr<CallbackHandler>(handler)));
   }
+
+  /**
+   * @brief Set a callback function to pass IO error
+   * @param func a callback function to pass IO error
+   */
+  void setCallback(const ublox::Reader::Callback &func) { func_ = func; }
 
   /**
    * @brief Add a callback handler for the given message type and ID. This is
@@ -201,6 +207,7 @@ class CallbackHandlers {
    */
   void readCallback(unsigned char *data, std::size_t &size) {
     ublox::Reader reader(data, size);
+    reader.setCallback(func_);
     // Read all U-Blox messages in buffer
     while (reader.search() != reader.end() && reader.found()) {
       if (debug >= 3) {
@@ -229,6 +236,8 @@ class CallbackHandlers {
   // Call back handlers for u-blox messages
   Callbacks callbacks_;
   boost::mutex callback_mutex_;
+  // A callback function to pass IO error
+  ublox::Reader::Callback func_;
 };
 
 }  // namespace ublox_gps
