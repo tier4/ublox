@@ -145,6 +145,7 @@ class AsyncWorker final : public Worker {
   int debug_; //!< Used to determine which debug messages to display
 
   rclcpp::Logger logger_;
+  rclcpp::Clock rclcpp_clock_ = rclcpp::Clock(RCL_ROS_TIME);
 };
 
 template <typename StreamT>
@@ -237,7 +238,7 @@ void AsyncWorker<StreamT>::readEnd(const asio::error_code& error,
                                    std::size_t bytes_transferred) {
   std::lock_guard<std::mutex> lock(read_mutex_);
   if (error) {
-    RCLCPP_ERROR(logger_, "U-Blox ASIO input buffer read error: %s, %li",
+    RCLCPP_ERROR_THROTTLE(logger_, rclcpp_clock_, 5000, "U-Blox ASIO input buffer read error: %s, %li",
                  error.message().c_str(),
                  bytes_transferred);
   } else if (bytes_transferred > 0) {
