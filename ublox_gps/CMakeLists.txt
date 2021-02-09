@@ -81,6 +81,11 @@ ament_target_dependencies(ublox_logger_node
   "std_msgs"
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 install(TARGETS
   ublox_gps_node ublox_logger_node
   DESTINATION lib/${PROJECT_NAME}
