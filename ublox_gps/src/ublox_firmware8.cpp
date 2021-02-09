@@ -133,7 +133,7 @@ bool UbloxFirmware8::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
   if (clear_bbr_) {
     // clear flash memory
     if (!gps->clearBbr()) {
-      RCLCPP_ERROR(node_->get_logger(), "u-blox failed to clear flash memory");
+      RCLCPP_WARN(node_->get_logger(), "u-blox failed to clear flash memory");
     }
   }
 

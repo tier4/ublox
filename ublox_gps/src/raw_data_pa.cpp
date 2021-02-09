@@ -99,11 +99,11 @@ void RawDataStreamPa::initialize() {
   if (!file_dir_.empty()) {
     struct stat stat_info{};
     if (::stat(file_dir_.c_str(), &stat_info) != 0) {
-      RCLCPP_ERROR(this->get_logger(), "Can't log raw data to file. "
+      RCLCPP_WARN(this->get_logger(), "Can't log raw data to file. "
                    "Directory \"%s\" does not exist.", file_dir_.c_str());
 
     } else if ((stat_info.st_mode & S_IFDIR) != S_IFDIR) {
-      RCLCPP_ERROR(this->get_logger(), "Can't log raw data to file. "
+      RCLCPP_WARN(this->get_logger(), "Can't log raw data to file. "
                    "\"%s\" exists, but is not a directory.", file_dir_.c_str());
 
     } else {
@@ -136,7 +136,7 @@ void RawDataStreamPa::initialize() {
         RCLCPP_INFO(this->get_logger(), "Logging raw data to file \"%s\"",
                     file_name_.c_str());
       } catch (const std::exception& e) {
-        RCLCPP_ERROR(this->get_logger(), "Can't log raw data to file. "
+        RCLCPP_WARN(this->get_logger(), "Can't log raw data to file. "
                      "Can't create file \"%s\".", file_name_.c_str());
       }
     }

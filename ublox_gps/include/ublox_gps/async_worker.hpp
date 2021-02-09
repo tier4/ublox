@@ -175,12 +175,12 @@ bool AsyncWorker<StreamT>::send(const unsigned char* data,
                                 const unsigned int size) {
   std::lock_guard<std::mutex> lock(write_mutex_);
   if (size == 0) {
-    RCLCPP_ERROR(logger_, "Ublox AsyncWorker::send: Size of message to send is 0");
+    RCLCPP_WARN(logger_, "Ublox AsyncWorker::send: Size of message to send is 0");
     return true;
   }
 
   if (out_.capacity() - out_.size() < size) {
-    RCLCPP_ERROR(logger_, "Ublox AsyncWorker::send: Output buffer too full to send message");
+    RCLCPP_WARN(logger_, "Ublox AsyncWorker::send: Output buffer too full to send message");
     return false;
   }
   out_.insert(out_.end(), data, data + size);
@@ -238,7 +238,7 @@ void AsyncWorker<StreamT>::readEnd(const asio::error_code& error,
                                    std::size_t bytes_transferred) {
   std::lock_guard<std::mutex> lock(read_mutex_);
   if (error) {
-    RCLCPP_ERROR_THROTTLE(logger_, rclcpp_clock_, 5000, "U-Blox ASIO input buffer read error: %s, %li",
+    RCLCPP_WARN_THROTTLE(logger_, rclcpp_clock_, 5000, "U-Blox ASIO input buffer read error: %s, %li",
                  error.message().c_str(),
                  bytes_transferred);
   } else if (bytes_transferred > 0) {
@@ -268,7 +268,7 @@ void AsyncWorker<StreamT>::readEnd(const asio::error_code& error,
 
     read_condition_.notify_all();
   } else {
-    RCLCPP_ERROR(logger_, "U-Blox ASIO transferred zero bytes");
+    RCLCPP_WARN(logger_, "U-Blox ASIO transferred zero bytes");
   }
 
   if (!stopping_) {
@@ -283,7 +283,7 @@ void AsyncWorker<StreamT>::doClose() {
   asio::error_code error;
   stream_->close(error);
   if (error) {
-    RCLCPP_ERROR(logger_, "Error while closing the AsyncWorker stream: %s",
+    RCLCPP_WARN(logger_, "Error while closing the AsyncWorker stream: %s",
                  error.message().c_str());
   }
 }

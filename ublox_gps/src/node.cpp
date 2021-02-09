@@ -762,11 +762,11 @@ bool UbloxNode::configureUblox() {
       RCLCPP_DEBUG(this->get_logger(), "Saving the u-blox configuration, mask %u, device %u",
                    save_.save_mask, save_.device_mask);
       if (!gps_->configure(save_)) {
-        RCLCPP_ERROR(this->get_logger(), "u-blox unable to save configuration to non-volatile memory");
+        RCLCPP_WARN(this->get_logger(), "u-blox unable to save configuration to non-volatile memory");
       }
     }
   } catch (const std::exception& e) {
-    RCLCPP_FATAL(this->get_logger(), "Error configuring u-blox: %s", e.what());
+    RCLCPP_WARN(this->get_logger(), "Error configuring u-blox: %s", e.what());
     return false;
   }
   return true;

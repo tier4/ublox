@@ -156,7 +156,7 @@ bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
     }
     // As recommended in the documentation, first disable, then set to survey in
     if (!gps->disableTmode3()) {
-      RCLCPP_ERROR(node_->get_logger(), "Failed to disable TMODE3 before setting to survey-in.");
+      RCLCPP_WARN(node_->get_logger(), "Failed to disable TMODE3 before setting to survey-in.");
     } else {
       mode_ = DISABLED;
     }
@@ -198,12 +198,12 @@ bool HpgRefProduct::setTimeMode(std::shared_ptr<ublox_gps::Gps> gps) {
   // Set the Measurement & nav rate to user config
   // (survey-in sets nav_rate to 1 Hz regardless of user setting)
   if (!gps->configRate(meas_rate_, nav_rate_)) {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to set measurement rate to %d ms navigation rate to %d cycles",
+    RCLCPP_WARN(node_->get_logger(), "Failed to set measurement rate to %d ms navigation rate to %d cycles",
                  meas_rate_, nav_rate_);
   }
   // Enable the RTCM out messages
   if (!gps->configRtcm(rtcms_)) {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to configure RTCM IDs");
+    RCLCPP_WARN(node_->get_logger(), "Failed to configure RTCM IDs");
     return false;
   }
   return true;

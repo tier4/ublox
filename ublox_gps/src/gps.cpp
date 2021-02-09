@@ -118,7 +118,7 @@ void Gps::processNack(const ublox_msgs::msg::Ack &m) {
   ack.msg_id = m.msg_id;
   // store the ack atomically
   ack_.store(ack, std::memory_order_seq_cst);
-  RCLCPP_ERROR(logger_, "U-blox: received NACK: 0x%02x / 0x%02x", m.cls_id, m.msg_id);
+  RCLCPP_WARN(logger_, "U-blox: received NACK: 0x%02x / 0x%02x", m.cls_id, m.msg_id);
 }
 
 void Gps::processUpdSosAck(const ublox_msgs::msg::UpdSOSAck &m) {
@@ -132,7 +132,7 @@ void Gps::processUpdSosAck(const ublox_msgs::msg::UpdSOSAck &m) {
     RCLCPP_DEBUG_EXPRESSION(logger_, ack.type == ACK && debug_ >= 2,
                             "U-blox: received UPD SOS Backup ACK");
     if (ack.type == NACK) {
-      RCLCPP_ERROR(logger_, "U-blox: received UPD SOS Backup NACK");
+      RCLCPP_WARN(logger_, "U-blox: received UPD SOS Backup NACK");
     }
   }
 }
@@ -221,12 +221,12 @@ void Gps::resetSerial(const std::string & port) {
   std::vector<uint8_t> payload;
   payload.push_back(ublox_msgs::msg::CfgPRT::PORT_ID_UART1);
   if (!poll(ublox_msgs::msg::CfgPRT::CLASS_ID, ublox_msgs::msg::CfgPRT::MESSAGE_ID, payload)) {
-    RCLCPP_ERROR(logger_, "Resetting Serial Port: Could not poll UART1 CfgPRT");
+    RCLCPP_WARN(logger_, "Resetting Serial Port: Could not poll UART1 CfgPRT");
     return;
   }
   ublox_msgs::msg::CfgPRT prt;
   if (!read(prt, default_timeout_)) {
-    RCLCPP_ERROR(logger_, "Resetting Serial Port: Could not read polled UART1 CfgPRT %s",
+    RCLCPP_WARN(logger_, "Resetting Serial Port: Could not read polled UART1 CfgPRT %s",
                  "message");
     return;
   }
@@ -372,11 +372,11 @@ bool Gps::disableUart1(ublox_msgs::msg::CfgPRT& prev_config) {
   std::vector<uint8_t> payload;
   payload.push_back(ublox_msgs::msg::CfgPRT::PORT_ID_UART1);
   if (!poll(ublox_msgs::msg::CfgPRT::CLASS_ID, ublox_msgs::msg::CfgPRT::MESSAGE_ID, payload)) {
-    RCLCPP_ERROR(logger_, "disableUart: Could not poll UART1 CfgPRT");
+    RCLCPP_WARN(logger_, "disableUart: Could not poll UART1 CfgPRT");
     return false;
   }
   if (!read(prev_config, default_timeout_)) {
-    RCLCPP_ERROR(logger_, "disableUart: Could not read polled UART1 CfgPRT message");
+    RCLCPP_WARN(logger_, "disableUart: Could not read polled UART1 CfgPRT message");
     return false;
   }
   // Keep original settings, but disable in/out
@@ -424,7 +424,7 @@ bool Gps::configRtcm(const std::vector<Rtcm> & rtcms) {
   for (const Rtcm & rtcm : rtcms) {
     RCLCPP_DEBUG(logger_, "Setting RTCM %d Rate %u", rtcm.id, rtcm.rate);
     if (!setRate(ublox_msgs::Class::RTCM, rtcm.id, rtcm.rate)) {
-      RCLCPP_ERROR(logger_, "Could not set RTCM %d to rate %u", rtcm.id, rtcm.rate);
+      RCLCPP_WARN(logger_, "Could not set RTCM %d to rate %u", rtcm.id, rtcm.rate);
       return false;
     }
   }
@@ -446,7 +446,7 @@ bool Gps::configTmode3Fixed(bool lla_flag,
                             std::vector<int8_t> arp_position_hp,
                             float fixed_pos_acc) {
   if (arp_position.size() != 3 || arp_position_hp.size() != 3) {
-    RCLCPP_ERROR(logger_, "Configuring TMODE3 to Fixed: size of position %s",
+    RCLCPP_WARN(logger_, "Configuring TMODE3 to Fixed: size of position %s",
                  "& arp_position_hp args must be 3");
     return false;
   }
