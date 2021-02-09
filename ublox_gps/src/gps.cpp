@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Tier IV, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //==============================================================================
 // Copyright (c) 2012, Johannes Meyer, TU Darmstadt
 // All rights reserved.
@@ -164,8 +180,9 @@ void Gps::initializeSerial(const std::string & port, unsigned int baudrate,
       continue;
     }
     serial->set_option(asio::serial_port_base::baud_rate(fixed_baudrate));
+    const int setBaudrateSleepMs = kSetBaudrateSleepMs;
     std::this_thread::sleep_for(
-        std::chrono::milliseconds(kSetBaudrateSleepMs));
+        std::chrono::milliseconds(setBaudrateSleepMs));
     serial->get_option(current_baudrate);
     RCLCPP_DEBUG(logger_, "U-Blox: Set ASIO baudrate to %u", current_baudrate.value());
   }
