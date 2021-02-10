@@ -39,7 +39,8 @@
 // to configure the u-blox and subscribe to u-blox messages.
 //
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief This interface is used to add functionality to the main node.
@@ -47,8 +48,9 @@ namespace ublox_node {
  * @details This interface is generic and can be implemented for other features
  * besides the main node, hardware versions, and firmware versions.
  */
-class ComponentInterface {
- public:
+class ComponentInterface
+{
+public:
   /**
    * @brief Get the ROS parameters.
    * @throws std::runtime_error if a parameter is invalid or required

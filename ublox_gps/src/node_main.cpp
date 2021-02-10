@@ -4,7 +4,8 @@
 
 #include <ublox_gps/node.hpp>
 
-int main(int argc, char** argv) {
+int main(int argc, char ** argv)
+{
   // Force flush of the stdout buffer.
   setvbuf(stdout, nullptr, _IONBF, BUFSIZ);
 

@@ -15,13 +15,18 @@
 #include <ublox_gps/hpg_ref_product.hpp>
 #include <ublox_gps/utils.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 //
 // U-Blox High Precision Positioning Receiver
 //
-HpPosRecProduct::HpPosRecProduct(uint16_t nav_rate, uint16_t meas_rate, const std::string & frame_id, std::shared_ptr<diagnostic_updater::Updater> updater, std::vector<ublox_gps::Rtcm> rtcms, rclcpp::Node* node)
-  : HpgRefProduct(nav_rate, meas_rate, updater, rtcms, node), frame_id_(frame_id)
+HpPosRecProduct::HpPosRecProduct(
+  uint16_t nav_rate, uint16_t meas_rate,
+  const std::string & frame_id,
+  std::shared_ptr<diagnostic_updater::Updater> updater, std::vector<ublox_gps::Rtcm> rtcms,
+  rclcpp::Node * node)
+: HpgRefProduct(nav_rate, meas_rate, updater, rtcms, node), frame_id_(frame_id)
 {
   if (getRosBoolean(node_, "publish.nav.relposned")) {
     nav_relposned_pub_ =
@@ -34,14 +39,17 @@ HpPosRecProduct::HpPosRecProduct(uint16_t nav_rate, uint16_t meas_rate, const st
   }
 }
 
-void HpPosRecProduct::subscribe(std::shared_ptr<ublox_gps::Gps> gps) {
+void HpPosRecProduct::subscribe(std::shared_ptr<ublox_gps::Gps> gps)
+{
   // Whether to publish Nav Relative Position NED
   // Subscribe to Nav Relative Position NED messages (also updates diagnostics)
-  gps->subscribe<ublox_msgs::msg::NavRELPOSNED9>(std::bind(
-     &HpPosRecProduct::callbackNavRelPosNed, this, std::placeholders::_1), 1);
+  gps->subscribe<ublox_msgs::msg::NavRELPOSNED9>(
+    std::bind(
+      &HpPosRecProduct::callbackNavRelPosNed, this, std::placeholders::_1), 1);
 }
 
-void HpPosRecProduct::callbackNavRelPosNed(const ublox_msgs::msg::NavRELPOSNED9 &m) {
+void HpPosRecProduct::callbackNavRelPosNed(const ublox_msgs::msg::NavRELPOSNED9 & m)
+{
   if (getRosBoolean(node_, "publish.nav.relposned")) {
     nav_relposned_pub_->publish(m);
   }

@@ -61,7 +61,8 @@
  * This namespace is for the ROS u-blox node and handles anything regarding
  * ROS parameters, message passing, diagnostics, etc.
  */
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief This class represents u-blox ROS node for *all* firmware and product
@@ -78,8 +79,9 @@ namespace ublox_node {
  * The UbloxNode calls the public methods of ComponentInterface for each
  * element in the components vector.
  */
-class UbloxNode final : public rclcpp::Node {
- public:
+class UbloxNode final : public rclcpp::Node
+{
+public:
   //! How long to wait during I/O reset [s]
   constexpr static int kResetWait = 10;
   //! how often (in seconds) to call poll messages
@@ -101,10 +103,10 @@ class UbloxNode final : public rclcpp::Node {
 
   ~UbloxNode() override;
 
-  UbloxNode(UbloxNode &&c) = delete;
-  UbloxNode &operator=(UbloxNode &&c) = delete;
-  UbloxNode(const UbloxNode &c) = delete;
-  UbloxNode &operator=(const UbloxNode &c) = delete;
+  UbloxNode(UbloxNode && c) = delete;
+  UbloxNode & operator=(UbloxNode && c) = delete;
+  UbloxNode(const UbloxNode & c) = delete;
+  UbloxNode & operator=(const UbloxNode & c) = delete;
 
   /**
    * @brief Get the node parameters from the ROS Parameter Server.
@@ -130,10 +132,9 @@ class UbloxNode final : public rclcpp::Node {
   /**
    * @brief Print an INF message to the ROS console.
    */
-  void printInf(const ublox_msgs::msg::Inf &m, uint8_t id);
+  void printInf(const ublox_msgs::msg::Inf & m, uint8_t id);
 
- private:
-
+private:
   /**
    * @brief Initialize the I/O handling.
    */
@@ -176,8 +177,9 @@ class UbloxNode final : public rclcpp::Node {
    * @param for HPG/TIM products, this value is either REF or ROV, for other
    * products this string is empty
    */
-  void addProductInterface(const std::string & product_category,
-                           const std::string & ref_rov = "");
+  void addProductInterface(
+    const std::string & product_category,
+    const std::string & ref_rov = "");
 
   /**
    * @brief Poll messages from the U-Blox device.
@@ -195,7 +197,7 @@ class UbloxNode final : public rclcpp::Node {
    * The node will call the functions in these interfaces for each object
    * in the vector.
    */
-  std::vector<std::shared_ptr<ComponentInterface> > components_;
+  std::vector<std::shared_ptr<ComponentInterface>> components_;
 
   //! Determined From Mon VER
   float protocol_version_ = 0.0;

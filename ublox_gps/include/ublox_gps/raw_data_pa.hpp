@@ -51,14 +51,15 @@
  * This namespace is for the ROS u-blox node and handles anything regarding
  * ROS parameters, message passing, diagnostics, etc.
  */
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Implements functions for raw data stream.
  */
-class RawDataStreamPa final : public rclcpp::Node {
- public:
-
+class RawDataStreamPa final : public rclcpp::Node
+{
+public:
   /**
    * @brief Constructor.
    * Initialises variables and the nodehandle.
@@ -89,10 +90,11 @@ class RawDataStreamPa final : public rclcpp::Node {
    * @param data the buffer of u-blox messages to process
    * @param size the size of the buffer
    */
-  void ubloxCallback(const unsigned char* data,
-                     std::size_t size);
+  void ubloxCallback(
+    const unsigned char * data,
+    std::size_t size);
 
- private:
+private:
   /**
    * @brief Callback function which handles raw data.
    * @param msg ros message

@@ -8,17 +8,19 @@
 #include <diagnostic_updater/publisher.hpp>
 #include <diagnostic_updater/update_functions.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 //! Topic diagnostics for u-blox messages
-struct UbloxTopicDiagnostic {
+struct UbloxTopicDiagnostic
+{
   UbloxTopicDiagnostic() = default;
 
   // Must not copy this struct (would confuse FrequencyStatusParam pointers)
-  UbloxTopicDiagnostic(UbloxTopicDiagnostic &&c) = delete;
-  UbloxTopicDiagnostic &operator=(UbloxTopicDiagnostic &&c) = delete;
-  UbloxTopicDiagnostic(const UbloxTopicDiagnostic &c) = delete;
-  UbloxTopicDiagnostic &operator=(const UbloxTopicDiagnostic &c) = delete;
+  UbloxTopicDiagnostic(UbloxTopicDiagnostic && c) = delete;
+  UbloxTopicDiagnostic & operator=(UbloxTopicDiagnostic && c) = delete;
+  UbloxTopicDiagnostic(const UbloxTopicDiagnostic & c) = delete;
+  UbloxTopicDiagnostic & operator=(const UbloxTopicDiagnostic & c) = delete;
 
   ~UbloxTopicDiagnostic() = default;
 
@@ -30,16 +32,19 @@ struct UbloxTopicDiagnostic {
    * @param freq_tol the tolerance [%] for the topic frequency
    * @param freq_window the number of messages to use for diagnostic statistics
    */
-  explicit UbloxTopicDiagnostic(const std::string & topic, double freq_tol, int freq_window,
-                                uint16_t nav_rate, uint16_t meas_rate, std::shared_ptr<diagnostic_updater::Updater> updater) {
+  explicit UbloxTopicDiagnostic(
+    const std::string & topic, double freq_tol, int freq_window,
+    uint16_t nav_rate, uint16_t meas_rate, std::shared_ptr<diagnostic_updater::Updater> updater)
+  {
     const double target_freq = 1.0 / (meas_rate * 1e-3 * nav_rate); // Hz
     min_freq = target_freq;
     max_freq = target_freq;
     diagnostic_updater::FrequencyStatusParam freq_param(&min_freq, &max_freq,
-                                                        freq_tol, freq_window);
-    diagnostic = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>(topic,
-                                                                                 *updater,
-                                                                                 freq_param);
+      freq_tol, freq_window);
+    diagnostic = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>(
+      topic,
+      *updater,
+      freq_param);
   }
 
   /**
@@ -52,15 +57,18 @@ struct UbloxTopicDiagnostic {
    * @param freq_tol the tolerance [%] for the topic frequency
    * @param freq_window the number of messages to use for diagnostic statistics
    */
-  explicit UbloxTopicDiagnostic(const std::string & topic, double freq_min, double freq_max,
-                                double freq_tol, int freq_window, std::shared_ptr<diagnostic_updater::Updater> updater) {
+  explicit UbloxTopicDiagnostic(
+    const std::string & topic, double freq_min, double freq_max,
+    double freq_tol, int freq_window, std::shared_ptr<diagnostic_updater::Updater> updater)
+  {
     min_freq = freq_min;
     max_freq = freq_max;
     diagnostic_updater::FrequencyStatusParam freq_param(&min_freq, &max_freq,
-                                                        freq_tol, freq_window);
-    diagnostic = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>(topic,
-                                                                                 *updater,
-                                                                                 freq_param);
+      freq_tol, freq_window);
+    diagnostic = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>(
+      topic,
+      *updater,
+      freq_param);
   }
 
   //! Topic frequency diagnostic updater

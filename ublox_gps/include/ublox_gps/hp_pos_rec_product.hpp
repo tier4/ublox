@@ -15,25 +15,29 @@
 #include <ublox_gps/hpg_ref_product.hpp>
 #include <ublox_gps/rtcm.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
-class HpPosRecProduct final : public virtual HpgRefProduct {
- public:
-  explicit HpPosRecProduct(uint16_t nav_rate, uint16_t meas_rate, const std::string & frame_id, std::shared_ptr<diagnostic_updater::Updater> updater, std::vector<ublox_gps::Rtcm> rtcms, rclcpp::Node* node);
+class HpPosRecProduct final : public virtual HpgRefProduct
+{
+public:
+  explicit HpPosRecProduct(
+    uint16_t nav_rate, uint16_t meas_rate, const std::string & frame_id,
+    std::shared_ptr<diagnostic_updater::Updater> updater,
+    std::vector<ublox_gps::Rtcm> rtcms, rclcpp::Node * node);
 
   /**
    * @brief Subscribe to Rover messages, such as NavRELPOSNED.
    */
   void subscribe(std::shared_ptr<ublox_gps::Gps> gps) override;
 
- private:
-
+private:
   /**
    * @brief Set the last received message and call rover diagnostic updater
    *
    * @details Publish received NavRELPOSNED messages if enabled
    */
-  void callbackNavRelPosNed(const ublox_msgs::msg::NavRELPOSNED9 &m);
+  void callbackNavRelPosNed(const ublox_msgs::msg::NavRELPOSNED9 & m);
 
   sensor_msgs::msg::Imu imu_;
 

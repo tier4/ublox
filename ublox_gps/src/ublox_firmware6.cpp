@@ -22,13 +22,17 @@
 #include <ublox_gps/ublox_firmware6.hpp>
 #include <ublox_gps/utils.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 //
 // U-Blox Firmware Version 6
 //
-UbloxFirmware6::UbloxFirmware6(const std::string & frame_id, std::shared_ptr<diagnostic_updater::Updater> updater, std::shared_ptr<FixDiagnostic> freq_diag, std::shared_ptr<Gnss> gnss, rclcpp::Node* node)
-  : UbloxFirmware(updater, gnss, node), frame_id_(frame_id), freq_diag_(freq_diag)
+UbloxFirmware6::UbloxFirmware6(
+  const std::string & frame_id,
+  std::shared_ptr<diagnostic_updater::Updater> updater, std::shared_ptr<FixDiagnostic> freq_diag,
+  std::shared_ptr<Gnss> gnss, rclcpp::Node * node)
+: UbloxFirmware(updater, gnss, node), frame_id_(frame_id), freq_diag_(freq_diag)
 {
   if (getRosBoolean(node_, "publish.nav.posllh")) {
     nav_pos_llh_pub_ =
@@ -44,8 +48,9 @@ UbloxFirmware6::UbloxFirmware6(const std::string & frame_id, std::shared_ptr<dia
   }
 
   vel_pub_ =
-    node_->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("fix_velocity",
-                                                             1);
+    node_->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+    "fix_velocity",
+    1);
 
   if (getRosBoolean(node_, "publish.nav.sol")) {
     nav_sol_pub_ =
@@ -61,35 +66,47 @@ UbloxFirmware6::UbloxFirmware6(const std::string & frame_id, std::shared_ptr<dia
   }
 }
 
-void UbloxFirmware6::getRosParams() {
+void UbloxFirmware6::getRosParams()
+{
   // Fix Service type, used when publishing fix status messages
   fix_status_service_ = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
 
   if (getRosBoolean(node_, "nmea.set")) {
     if (!getRosUint(node_, "nmea.version", cfg_nmea_.version)) {
-      throw std::runtime_error(std::string("Invalid settings: nmea.set is ") +
-          "true, therefore nmea.version must be set");
+      throw std::runtime_error(
+              std::string("Invalid settings: nmea.set is ") +
+              "true, therefore nmea.version must be set");
     }
     if (!getRosUint(node_, "nmea.num_sv", cfg_nmea_.num_sv)) {
-      throw std::runtime_error(std::string("Invalid settings: nmea.set is ") +
-                "true, therefore nmea.num_sv must be set");
+      throw std::runtime_error(
+              std::string("Invalid settings: nmea.set is ") +
+              "true, therefore nmea.num_sv must be set");
     }
 
     // set flags
-    cfg_nmea_.flags = getRosBoolean(node_, "nmea.compat") ? ublox_msgs::msg::CfgNMEA6::FLAGS_COMPAT : 0;
-    cfg_nmea_.flags |= getRosBoolean(node_, "nmea.consider") ? ublox_msgs::msg::CfgNMEA6::FLAGS_CONSIDER : 0;
+    cfg_nmea_.flags =
+      getRosBoolean(node_, "nmea.compat") ? ublox_msgs::msg::CfgNMEA6::FLAGS_COMPAT : 0;
+    cfg_nmea_.flags |=
+      getRosBoolean(node_, "nmea.consider") ? ublox_msgs::msg::CfgNMEA6::FLAGS_CONSIDER : 0;
 
     // set filter
-    cfg_nmea_.filter |= getRosBoolean(node_, "nmea.filter.pos") ? ublox_msgs::msg::CfgNMEA6::FILTER_POS : 0;
-    cfg_nmea_.filter |= getRosBoolean(node_, "nmea.filter.msk_pos") ? ublox_msgs::msg::CfgNMEA6::FILTER_MSK_POS : 0;
-    cfg_nmea_.filter |= getRosBoolean(node_, "nmea.filter.time") ? ublox_msgs::msg::CfgNMEA6::FILTER_TIME : 0;
-    cfg_nmea_.filter |= getRosBoolean(node_, "nmea.filter.date") ? ublox_msgs::msg::CfgNMEA6::FILTER_DATE : 0;
-    cfg_nmea_.filter |= getRosBoolean(node_, "nmea.filter.sbas") ? ublox_msgs::msg::CfgNMEA6::FILTER_SBAS_FILT : 0;
-    cfg_nmea_.filter |= getRosBoolean(node_, "nmea.filter.track") ? ublox_msgs::msg::CfgNMEA6::FILTER_TRACK : 0;
+    cfg_nmea_.filter |=
+      getRosBoolean(node_, "nmea.filter.pos") ? ublox_msgs::msg::CfgNMEA6::FILTER_POS : 0;
+    cfg_nmea_.filter |=
+      getRosBoolean(node_, "nmea.filter.msk_pos") ? ublox_msgs::msg::CfgNMEA6::FILTER_MSK_POS : 0;
+    cfg_nmea_.filter |=
+      getRosBoolean(node_, "nmea.filter.time") ? ublox_msgs::msg::CfgNMEA6::FILTER_TIME : 0;
+    cfg_nmea_.filter |=
+      getRosBoolean(node_, "nmea.filter.date") ? ublox_msgs::msg::CfgNMEA6::FILTER_DATE : 0;
+    cfg_nmea_.filter |=
+      getRosBoolean(node_, "nmea.filter.sbas") ? ublox_msgs::msg::CfgNMEA6::FILTER_SBAS_FILT : 0;
+    cfg_nmea_.filter |=
+      getRosBoolean(node_, "nmea.filter.track") ? ublox_msgs::msg::CfgNMEA6::FILTER_TRACK : 0;
   }
 }
 
-bool UbloxFirmware6::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
+bool UbloxFirmware6::configureUblox(std::shared_ptr<ublox_gps::Gps> gps)
+{
   RCLCPP_WARN(node_->get_logger(), "ublox_version < 7, ignoring GNSS settings");
 
   if (getRosBoolean(node_, "nmea.set") && !gps->configure(cfg_nmea_)) {
@@ -99,33 +116,40 @@ bool UbloxFirmware6::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
   return true;
 }
 
-void UbloxFirmware6::subscribe(std::shared_ptr<ublox_gps::Gps> gps) {
+void UbloxFirmware6::subscribe(std::shared_ptr<ublox_gps::Gps> gps)
+{
   // Always subscribes to these messages, but may not publish to ROS topic
   // Subscribe to Nav POSLLH
-  gps->subscribe<ublox_msgs::msg::NavPOSLLH>(std::bind(
+  gps->subscribe<ublox_msgs::msg::NavPOSLLH>(
+    std::bind(
       &UbloxFirmware6::callbackNavPosLlh, this, std::placeholders::_1), 1);
-  gps->subscribe<ublox_msgs::msg::NavSOL>(std::bind(
-  // Subscribe to Nav SOL
+  gps->subscribe<ublox_msgs::msg::NavSOL>(
+    std::bind(
+      // Subscribe to Nav SOL
       &UbloxFirmware6::callbackNavSol, this, std::placeholders::_1), 1);
   // Subscribe to Nav VELNED
-  gps->subscribe<ublox_msgs::msg::NavVELNED>(std::bind(
+  gps->subscribe<ublox_msgs::msg::NavVELNED>(
+    std::bind(
       &UbloxFirmware6::callbackNavVelNed, this, std::placeholders::_1), 1);
 
   // Subscribe to Nav SVINFO
   if (getRosBoolean(node_, "publish.nav.svinfo")) {
-    gps->subscribe<ublox_msgs::msg::NavSVINFO>([this](const ublox_msgs::msg::NavSVINFO &m) { nav_svinfo_pub_->publish(m); },
-                                          kNavSvInfoSubscribeRate);
+    gps->subscribe<ublox_msgs::msg::NavSVINFO>(
+      [this](const ublox_msgs::msg::NavSVINFO & m) {nav_svinfo_pub_->publish(m);},
+      kNavSvInfoSubscribeRate);
   }
 
   // Subscribe to Mon HW
   if (getRosBoolean(node_, "publish.mon.hw")) {
-    gps->subscribe<ublox_msgs::msg::MonHW6>([this](const ublox_msgs::msg::MonHW6 &m) { mon_hw_pub_->publish(m); },
-                                       1);
+    gps->subscribe<ublox_msgs::msg::MonHW6>(
+      [this](const ublox_msgs::msg::MonHW6 & m) {mon_hw_pub_->publish(m);},
+      1);
   }
 }
 
 void UbloxFirmware6::fixDiagnostic(
-    diagnostic_updater::DiagnosticStatusWrapper& stat) {
+  diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
   // Set the diagnostic level based on the fix status
   if (last_nav_sol_.gps_fix == ublox_msgs::msg::NavSOL::GPS_DEAD_RECKONING_ONLY) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
@@ -137,7 +161,8 @@ void UbloxFirmware6::fixDiagnostic(
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     stat.message = "3D fix";
   } else if (last_nav_sol_.gps_fix ==
-             ublox_msgs::msg::NavSOL::GPS_GPS_DEAD_RECKONING_COMBINED) {
+    ublox_msgs::msg::NavSOL::GPS_GPS_DEAD_RECKONING_COMBINED)
+  {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     stat.message = "GPS and dead reckoning combined";
   } else if (last_nav_sol_.gps_fix == ublox_msgs::msg::NavSOL::GPS_TIME_ONLY_FIX) {
@@ -166,7 +191,8 @@ void UbloxFirmware6::fixDiagnostic(
   stat.add("# SVs used", static_cast<int>(last_nav_sol_.num_sv));
 }
 
-void UbloxFirmware6::callbackNavPosLlh(const ublox_msgs::msg::NavPOSLLH& m) {
+void UbloxFirmware6::callbackNavPosLlh(const ublox_msgs::msg::NavPOSLLH & m)
+{
   if (getRosBoolean(node_, "publish.nav.posllh")) {
     nav_pos_llh_pub_->publish(m);
   }
@@ -197,7 +223,7 @@ void UbloxFirmware6::callbackNavPosLlh(const ublox_msgs::msg::NavPOSLLH& m) {
   fix_.position_covariance[4] = var_h;
   fix_.position_covariance[8] = var_v;
   fix_.position_covariance_type =
-      sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
+    sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 
   fix_.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
   fix_pub_->publish(fix_);
@@ -207,7 +233,8 @@ void UbloxFirmware6::callbackNavPosLlh(const ublox_msgs::msg::NavPOSLLH& m) {
   updater_->force_update();
 }
 
-void UbloxFirmware6::callbackNavVelNed(const ublox_msgs::msg::NavVELNED& m) {
+void UbloxFirmware6::callbackNavVelNed(const ublox_msgs::msg::NavVELNED & m)
+{
   if (getRosBoolean(node_, "publish.nav.velned")) {
     nav_vel_ned_pub_->publish(m);
   }
@@ -237,7 +264,8 @@ void UbloxFirmware6::callbackNavVelNed(const ublox_msgs::msg::NavVELNED& m) {
   last_nav_vel_ = m;
 }
 
-void UbloxFirmware6::callbackNavSol(const ublox_msgs::msg::NavSOL& m) {
+void UbloxFirmware6::callbackNavSol(const ublox_msgs::msg::NavSOL & m)
+{
   if (getRosBoolean(node_, "publish.nav.sol")) {
     nav_sol_pub_->publish(m);
   }

@@ -52,7 +52,8 @@
  * @namespace ublox
  * This namespace is for u-blox message serialization.
  */
-namespace ublox {
+namespace ublox
+{
 
 //! u-blox message Sync A char
 static const uint8_t DEFAULT_SYNC_A = 0xB5;
@@ -77,13 +78,13 @@ struct UbloxSerializer
    * \brief Write an object to the stream.  Normally the stream passed in here will be a UbloxOStream
    */
   template<typename Stream>
-  inline static void write(Stream& stream, const T & t);
+  inline static void write(Stream & stream, const T & t);
 
   /**
    * \brief Read an object from the stream.  Normally the stream passed in here will be a UbloxIStream
    */
   template<typename Stream>
-  inline static void read(Stream& stream, T & t);
+  inline static void read(Stream & stream, T & t);
 
   /**
    * \brief Determine the serialized length of an object.
@@ -91,29 +92,32 @@ struct UbloxSerializer
   inline static uint32_t serializedLength(const T & t);
 };
 
-template <typename T>
+template<typename T>
 struct UbloxSerializer<T, typename std::enable_if<std::is_same<T, uint8_t>::value ||
-                                                  std::is_same<T, uint16_t>::value ||
-                                                  std::is_same<T, uint32_t>::value ||
-                                                  std::is_same<T, uint64_t>::value ||
-                                                  std::is_same<T, int8_t>::value ||
-                                                  std::is_same<T, int16_t>::value ||
-                                                  std::is_same<T, int32_t>::value ||
-                                                  std::is_same<T, int64_t>::value ||
-                                                  std::is_same<T, float>::value ||
-                                                  std::is_same<T, double>::value>::type>
+  std::is_same<T, uint16_t>::value ||
+  std::is_same<T, uint32_t>::value ||
+  std::is_same<T, uint64_t>::value ||
+  std::is_same<T, int8_t>::value ||
+  std::is_same<T, int16_t>::value ||
+  std::is_same<T, int32_t>::value ||
+  std::is_same<T, int64_t>::value ||
+  std::is_same<T, float>::value ||
+  std::is_same<T, double>::value>::type>
 {
   template<typename Stream>
-  inline static void write(Stream& stream, const T v) {
-    *reinterpret_cast<T*>(stream.advance(sizeof(v))) = v;
+  inline static void write(Stream & stream, const T v)
+  {
+    *reinterpret_cast<T *>(stream.advance(sizeof(v))) = v;
   }
 
   template<typename Stream>
-  inline static void read(Stream& stream, T& v) {
-    v = *reinterpret_cast<T*>(stream.advance(sizeof(v)));
+  inline static void read(Stream & stream, T & v)
+  {
+    v = *reinterpret_cast<T *>(stream.advance(sizeof(v)));
   }
 
-  inline static uint32_t serializedLength(const T& v) {
+  inline static uint32_t serializedLength(const T & v)
+  {
     (void)v;
     return sizeof(T);
   }
@@ -123,7 +127,8 @@ struct UbloxSerializer<T, typename std::enable_if<std::is_same<T, uint8_t>::valu
  * \brief Serialize an object.  Stream here should normally be a UbloxOStream
  */
 template<typename T, typename Stream>
-inline void serialize(Stream& stream, const T& t) {
+inline void serialize(Stream & stream, const T & t)
+{
   UbloxSerializer<T>::write(stream, t);
 }
 
@@ -131,7 +136,8 @@ inline void serialize(Stream& stream, const T& t) {
  * \brief Deserialize an object.  Stream here should normally be a UbloxIStream
  */
 template<typename T, typename Stream>
-inline void deserialize(Stream& stream, T& t) {
+inline void deserialize(Stream & stream, T & t)
+{
   UbloxSerializer<T>::read(stream, t);
 }
 
@@ -139,7 +145,8 @@ inline void deserialize(Stream& stream, T& t) {
  * \brief Determine the serialized length of an object
  */
 template<typename T>
-inline uint32_t serializationLength(const T& t) {
+inline uint32_t serializationLength(const T & t)
+{
   return UbloxSerializer<T>::serializedLength(t);
 }
 
@@ -155,29 +162,32 @@ struct StdArrayUbloxSerializer
  */
 template<typename T, size_t N>
 struct StdArrayUbloxSerializer<T, N, typename std::enable_if<std::is_same<T, uint8_t>::value ||
-                                                             std::is_same<T, uint16_t>::value ||
-                                                             std::is_same<T, uint32_t>::value ||
-                                                             std::is_same<T, uint64_t>::value ||
-                                                             std::is_same<T, int8_t>::value ||
-                                                             std::is_same<T, int16_t>::value ||
-                                                             std::is_same<T, int32_t>::value ||
-                                                             std::is_same<T, int64_t>::value ||
-                                                             std::is_same<T, float>::value ||
-                                                             std::is_same<T, double>::value>::type>
+  std::is_same<T, uint16_t>::value ||
+  std::is_same<T, uint32_t>::value ||
+  std::is_same<T, uint64_t>::value ||
+  std::is_same<T, int8_t>::value ||
+  std::is_same<T, int16_t>::value ||
+  std::is_same<T, int32_t>::value ||
+  std::is_same<T, int64_t>::value ||
+  std::is_same<T, float>::value ||
+  std::is_same<T, double>::value>::type>
 {
   template<typename Stream>
-  inline static void write(Stream& stream, const std::array<T, N>& v) {
+  inline static void write(Stream & stream, const std::array<T, N> & v)
+  {
     const uint32_t data_len = N * sizeof(T);
     std::memcpy(stream.advance(data_len), &v.front(), data_len);
   }
 
   template<typename Stream>
-  inline static void read(Stream& stream, std::array<T, N>& v) {
+  inline static void read(Stream & stream, std::array<T, N> & v)
+  {
     const uint32_t data_len = N * sizeof(T);
     std::memcpy(&v.front(), stream.advance(data_len), data_len);
   }
 
-  inline static uint32_t serializedLength(const std::array<T, N>& v) {
+  inline static uint32_t serializedLength(const std::array<T, N> & v)
+  {
     (void)v;
     return N * sizeof(T);
   }
@@ -187,7 +197,7 @@ struct StdArrayUbloxSerializer<T, N, typename std::enable_if<std::is_same<T, uin
  * \brief serialize version for std::array
  */
 template<typename T, size_t N, typename Stream>
-inline void serialize(Stream& stream, const std::array<T, N>& t)
+inline void serialize(Stream & stream, const std::array<T, N> & t)
 {
   StdArrayUbloxSerializer<T, N>::write(stream, t);
 }
@@ -196,7 +206,8 @@ inline void serialize(Stream& stream, const std::array<T, N>& t)
  * \brief deserialize version for std::array
  */
 template<typename T, size_t N, typename Stream>
-inline void deserialize(Stream& stream, std::array<T, N>& t) {
+inline void deserialize(Stream & stream, std::array<T, N> & t)
+{
   StdArrayUbloxSerializer<T, N>::read(stream, t);
 }
 
@@ -204,7 +215,7 @@ inline void deserialize(Stream& stream, std::array<T, N>& t) {
  * \brief serializationLength version for std::array
  */
 template<typename T, size_t N>
-inline uint32_t serializationLength(const std::array<T, N>& t)
+inline uint32_t serializationLength(const std::array<T, N> & t)
 {
   return StdArrayUbloxSerializer<T, N>::serializedLength(t);
 }
@@ -217,7 +228,8 @@ struct UbloxStream
   /*
    * \brief Returns a pointer to the current position of the stream
    */
-  inline uint8_t* getData() {
+  inline uint8_t * getData()
+  {
     return data_;
   }
   /**
@@ -225,8 +237,9 @@ struct UbloxStream
    * was advanced.
    * \throws StreamOverrunException if len would take this stream past the end of its buffer
    */
-  uint8_t* advance(uint32_t len) {
-    uint8_t* old_data = data_;
+  uint8_t * advance(uint32_t len)
+  {
+    uint8_t * old_data = data_;
     data_ += len;
     if (data_ > end_) {
       // Throwing directly here causes a significant speed hit due to the extra code generated
@@ -239,17 +252,17 @@ struct UbloxStream
   /**
    * \brief Returns the amount of space left in the stream
    */
-  inline uint32_t getLength() { return static_cast<uint32_t>(end_ - data_); }
+  inline uint32_t getLength() {return static_cast<uint32_t>(end_ - data_);}
 
 protected:
-  UbloxStream(uint8_t* _data, uint32_t _count)
-  : data_(_data)
-  , end_(_data + _count)
+  UbloxStream(uint8_t * _data, uint32_t _count)
+  : data_(_data),
+    end_(_data + _count)
   {}
 
 private:
-  uint8_t* data_;
-  uint8_t* end_;
+  uint8_t * data_;
+  uint8_t * end_;
 };
 
 /**
@@ -257,7 +270,7 @@ private:
  */
 struct UbloxIStream : public UbloxStream
 {
-  UbloxIStream(uint8_t* data, uint32_t count)
+  UbloxIStream(uint8_t * data, uint32_t count)
   : UbloxStream(data, count)
   {}
 
@@ -265,7 +278,8 @@ struct UbloxIStream : public UbloxStream
    * \brief Deserialize an item from this input stream
    */
   template<typename T>
-  void next(T& t) {
+  void next(T & t)
+  {
     deserialize(*this, t);
   }
 };
@@ -275,7 +289,7 @@ struct UbloxIStream : public UbloxStream
  */
 struct UbloxOStream : public UbloxStream
 {
-  UbloxOStream(uint8_t* data, uint32_t count)
+  UbloxOStream(uint8_t * data, uint32_t count)
   : UbloxStream(data, count)
   {}
 
@@ -283,7 +297,8 @@ struct UbloxOStream : public UbloxStream
    * \brief Serialize an item to this output stream
    */
   template<typename T>
-  void next(const T& t) {
+  void next(const T & t)
+  {
     serialize(*this, t);
   }
 };
@@ -292,18 +307,21 @@ struct UbloxOStream : public UbloxStream
  * @brief Keeps track of which class and message IDs can be decoded by a given
  * message type.
  */
-template <typename T>
-class Message {
- public:
+template<typename T>
+class Message
+{
+public:
   /**
    * @brief Can this message type decode a u-blox message with the given ID?
    * @param class_id the class ID of the u-blox message
    * @param message_id the message ID of the u-blox message
    * @return whether or not this message type decode the u-blox message
    */
-  static bool canDecode(uint8_t class_id, uint8_t message_id) {
-    return std::find(keys_.begin(), keys_.end(),
-                     std::make_pair(class_id, message_id)) != keys_.end();
+  static bool canDecode(uint8_t class_id, uint8_t message_id)
+  {
+    return std::find(
+      keys_.begin(), keys_.end(),
+      std::make_pair(class_id, message_id)) != keys_.end();
   }
 
   /**
@@ -312,30 +330,34 @@ class Message {
    * @param class_id the class ID of the u-blox message
    * @param message_id the message ID of the u-blox message
    */
-  static void addKey(uint8_t class_id, uint8_t message_id) {
+  static void addKey(uint8_t class_id, uint8_t message_id)
+  {
     keys_.emplace_back(std::make_pair(class_id, message_id));
   }
 
   struct StaticKeyInitializer
   {
-    StaticKeyInitializer(uint8_t class_id, uint8_t message_id) {
+    StaticKeyInitializer(uint8_t class_id, uint8_t message_id)
+    {
       Message<T>::addKey(class_id, message_id);
     }
   };
 
- private:
-  static std::vector<std::pair<uint8_t,uint8_t> > keys_;
+private:
+  static std::vector<std::pair<uint8_t, uint8_t>> keys_;
 };
 
 /**
  * @brief Options for the Reader and Writer for encoding and decoding messages.
  */
-struct Options {
+struct Options
+{
   /**
    * The default options for a u-blox message.
    */
-  Options() : sync_a(DEFAULT_SYNC_A), sync_b(DEFAULT_SYNC_B),
-              header_length(kHeaderLength), checksum_length(kChecksumLength) {}
+  Options()
+  : sync_a(DEFAULT_SYNC_A), sync_b(DEFAULT_SYNC_B),
+    header_length(kHeaderLength), checksum_length(kChecksumLength) {}
   //! The sync_a byte value identifying the start of a message
   uint8_t sync_a;
   //! The sync_b byte value identifying the start of a message
@@ -349,7 +371,8 @@ struct Options {
    * @brief Get the number of bytes in the header and footer.
    * @return the number of bytes in the header and footer
    */
-  uint32_t wrapper_length() {
+  uint32_t wrapper_length()
+  {
     return header_length + checksum_length;
   }
 };
@@ -357,17 +380,19 @@ struct Options {
 /**
  * @brief Decodes byte messages into u-blox ROS messages.
  */
-class Reader {
- public:
+class Reader
+{
+public:
   /**
    * @param data a buffer containing u-blox messages
    * @param count the size of the buffer
    * @param options A struct containing the parameters sync_a and sync_b
    * which represent the sync bytes indicating the beginning of the message
    */
-  Reader(const uint8_t *data, uint32_t count,
-         const Options &options = Options()) :
-      data_(data), count_(count), found_(false), options_(options) {}
+  Reader(
+    const uint8_t * data, uint32_t count,
+    const Options & options = Options())
+  : data_(data), count_(count), found_(false), options_(options) {}
 
   using iterator = const uint8_t *;
 
@@ -382,9 +407,10 @@ class Reader {
     }
 
     // Search for a message header
-    for( ; count_ > 0; --count_, ++data_) {
+    for ( ; count_ > 0; --count_, ++data_) {
       if (data_[0] == options_.sync_a &&
-          (count_ == 1 || data_[1] == options_.sync_b)) {
+        (count_ == 1 || data_[1] == options_.sync_b))
+      {
         break;
       }
     }
@@ -426,7 +452,8 @@ class Reader {
    * @details Warning: Does not go to the correct byte location if the received
    * message length is incorrect. If this is the case, search must be called.
    */
-  iterator next() {
+  iterator next()
+  {
     if (found()) {
       uint32_t size = length() + options_.wrapper_length();
       data_ += size; count_ -= size;
@@ -439,16 +466,18 @@ class Reader {
    * @brief Get the current position in the read buffer.
    * @return the current position of the read buffer
    */
-  iterator pos() {
+  iterator pos()
+  {
     return data_;
   }
 
-  iterator end() {
+  iterator end()
+  {
     return data_ + count_;
   }
 
-  uint8_t classId() { return data_[2]; }
-  uint8_t messageId() { return data_[3]; }
+  uint8_t classId() {return data_[2];}
+  uint8_t messageId() {return data_[3];}
 
   /**
    * @brief Get the length of the u-blox message payload.
@@ -457,17 +486,18 @@ class Reader {
    * Determines the length from the header of the u-blox message.
    * @return the length of the message payload
    */
-  uint32_t length() { return (data_[5] << 8) + data_[4]; }
-  const uint8_t *data() { return data_ + options_.header_length; }
+  uint32_t length() {return (data_[5] << 8) + data_[4];}
+  const uint8_t * data() {return data_ + options_.header_length;}
 
   /**
    * @brief Get the checksum of the u-blox message.
    *
    * @return the checksum of the u-blox message
    */
-  uint16_t checksum() {
+  uint16_t checksum()
+  {
     return *reinterpret_cast<const uint16_t *>(data_ + options_.header_length +
-                                               length());
+           length());
   }
 
   /**
@@ -475,9 +505,11 @@ class Reader {
    * @param message the output message
    * @param search whether or not to skip to the next message in the buffer
    */
-  template <typename T>
-  bool read(T &message,
-            bool search = false) {
+  template<typename T>
+  bool read(
+    T & message,
+    bool search = false)
+  {
     if (search) {
       this->search();
     }
@@ -512,8 +544,9 @@ class Reader {
    * @return whether the given message type can decode the current message in
    * the buffer
    */
-  template <typename T>
-  bool hasType() {
+  template<typename T>
+  bool hasType()
+  {
     if (!found()) {
       return false;
     }
@@ -525,16 +558,17 @@ class Reader {
    * @return Whether or not the u-blox message has the given class and message
    * ID
    */
-  bool isMessage(uint8_t class_id, uint8_t message_id) {
+  bool isMessage(uint8_t class_id, uint8_t message_id)
+  {
     if (!found()) {
       return false;
     }
-    return (classId() == class_id && messageId() == message_id);
+    return classId() == class_id && messageId() == message_id;
   }
 
- private:
+private:
   //! The buffer of message bytes
-  const uint8_t *data_;
+  const uint8_t * data_;
   //! the number of bytes in the buffer, //! decrement as the buffer is read
   uint32_t count_;
   //! Whether or not a message has been found
@@ -546,8 +580,9 @@ class Reader {
 /**
  * @brief Encodes a u-blox ROS message as a byte array.
  */
-class Writer {
- public:
+class Writer
+{
+public:
   using iterator = uint8_t *;
 
   /**
@@ -556,8 +591,8 @@ class Writer {
    * @param size the size of the buffer
    * @param options options representing the message sync chars, etc.
    */
-  Writer(uint8_t *data, uint32_t size, const Options &options = Options()) :
-      data_(data), size_(size), options_(options) {}
+  Writer(uint8_t * data, uint32_t size, const Options & options = Options())
+  : data_(data), size_(size), options_(options) {}
 
   /**
    * @brief Encode the u-blox message.
@@ -566,9 +601,12 @@ class Writer {
    * @param message_id the u-blox message ID, defaults to the message MESSAGE_ID
    * @return true if the message was encoded correctly, false otherwise
    */
-  template <typename T> bool write(const T& message,
-                                   uint8_t class_id = T::CLASS_ID,
-                                   uint8_t message_id = T::MESSAGE_ID) {
+  template<typename T>
+  bool write(
+    const T & message,
+    uint8_t class_id = T::CLASS_ID,
+    uint8_t message_id = T::MESSAGE_ID)
+  {
     // Check for buffer overflow
     uint32_t length = UbloxSerializer<T>::serializedLength(message);
     if (size_ < length + options_.wrapper_length()) {
@@ -577,8 +615,9 @@ class Writer {
       return false;
     }
     // Encode the message and add it to the buffer
-    UbloxSerializer<T>::write(data_ + options_.header_length,
-                         size_ - options_.header_length, message);
+    UbloxSerializer<T>::write(
+      data_ + options_.header_length,
+      size_ - options_.header_length, message);
     return write(nullptr, length, class_id, message_id);
   }
 
@@ -591,8 +630,10 @@ class Writer {
    * @param message_id the u-blox message ID
    * @return true if the message was encoded correctly, false otherwise
    */
-  bool write(const uint8_t* message, uint32_t length, uint8_t class_id,
-             uint8_t message_id) {
+  bool write(
+    const uint8_t * message, uint32_t length, uint8_t class_id,
+    uint8_t message_id)
+  {
     if (size_ < length + options_.wrapper_length()) {
       // ROS_ERROR("u-blox write buffer overflow. Message %u / %u not written",
       //           class_id, message_id);
@@ -626,11 +667,12 @@ class Writer {
     return true;
   }
 
-  iterator end() {
+  iterator end()
+  {
     return data_;
   }
 
- private:
+private:
   //! The buffer of message bytes
   iterator data_;
   //! The number of remaining bytes in the buffer
@@ -646,16 +688,18 @@ class Writer {
 #define DECLARE_UBLOX_MESSAGE(class_id, message_id, package, message) \
   template class ublox::UbloxSerializer<package::msg::message>; \
   template class ublox::Message<package::msg::message>; \
-  namespace package { namespace { \
-    static const ublox::Message<package::msg::message>::StaticKeyInitializer static_key_initializer_##message(class_id, message_id); \
-  } } \
+  namespace package {namespace { \
+  static const ublox::Message<package::msg::message>::StaticKeyInitializer static_key_initializer_ \
+  ## message(class_id, message_id); \
+  }} \
 
 // Use for messages which have the same structure but different IDs, e.g. INF
 // Call DECLARE_UBLOX_MESSAGE for the first message and DECLARE_UBLOX_MESSAGE_ID
 // for following declarations
 #define DECLARE_UBLOX_MESSAGE_ID(class_id, message_id, package, message, name) \
-  namespace package { namespace { \
-    static const ublox::Message<package::msg::message>::StaticKeyInitializer static_key_initializer_##name(class_id, message_id); \
-  } } \
+  namespace package {namespace { \
+  static const ublox::Message<package::msg::message>::StaticKeyInitializer static_key_initializer_ \
+  ## name(class_id, message_id); \
+  }} \
 
 #endif  // UBLOX_SERIALIZATION_SERIALIZATION_HPP

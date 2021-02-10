@@ -12,13 +12,15 @@
 #include <ublox_gps/gps.hpp>
 #include <ublox_gps/ublox_topic_diagnostic.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Implements functions for High Precision GNSS Rover devices.
  */
-class HpgRovProduct final : public virtual ComponentInterface {
- public:
+class HpgRovProduct final : public virtual ComponentInterface
+{
+public:
   // Constants for diagnostic updater
   //! Diagnostic updater: RTCM topic frequency min [Hz]
   const double kRtcmFreqMin = 1;
@@ -29,7 +31,9 @@ class HpgRovProduct final : public virtual ComponentInterface {
   //! Diagnostic updater: RTCM topic frequency window [num messages]
   const int kRtcmFreqWindow = 25;
 
-  explicit HpgRovProduct(uint16_t nav_rate, std::shared_ptr<diagnostic_updater::Updater> updater, rclcpp::Node* node);
+  explicit HpgRovProduct(
+    uint16_t nav_rate, std::shared_ptr<diagnostic_updater::Updater> updater,
+    rclcpp::Node * node);
 
   /**
    * @brief Get the ROS parameters specific to the Rover configuration.
@@ -57,20 +61,20 @@ class HpgRovProduct final : public virtual ComponentInterface {
    */
   void subscribe(std::shared_ptr<ublox_gps::Gps> gps) override;
 
- private:
+private:
   /**
    * @brief Update the rover diagnostics, including the carrier phase solution
    * status (float or fixed).
    */
   void carrierPhaseDiagnostics(
-      diagnostic_updater::DiagnosticStatusWrapper& stat);
+    diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
    * @brief Set the last received message and call rover diagnostic updater
    *
    * @details Publish received NavRELPOSNED messages if enabled
    */
-  void callbackNavRelPosNed(const ublox_msgs::msg::NavRELPOSNED &m);
+  void callbackNavRelPosNed(const ublox_msgs::msg::NavRELPOSNED & m);
 
 
   //! Last relative position (used for diagnostic updater)
@@ -87,7 +91,7 @@ class HpgRovProduct final : public virtual ComponentInterface {
 
   uint16_t nav_rate_;
   std::shared_ptr<diagnostic_updater::Updater> updater_;
-  rclcpp::Node* node_;
+  rclcpp::Node * node_;
 };
 
 }  // namespace ublox_node
