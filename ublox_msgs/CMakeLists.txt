@@ -112,7 +112,7 @@ ament_target_dependencies(${PROJECT_NAME}_lib
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  # ament_lint_auto_find_test_dependencies()
 endif()
 
 install(TARGETS ${PROJECT_NAME}_lib EXPORT ${PROJECT_NAME}_lib
