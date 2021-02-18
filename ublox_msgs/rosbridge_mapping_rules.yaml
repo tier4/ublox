@@ -689,7 +689,7 @@
     version: 'version'
     reserved0: 'reserved0'
     refStationId: 'ref_station_id'
-    iTOW: 'i_tow'
+    iTow: 'i_tow'
     relPosN: 'rel_pos_n'
     relPosE: 'rel_pos_e'
     relPosD: 'rel_pos_d'
