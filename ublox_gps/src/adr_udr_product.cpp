@@ -20,13 +20,18 @@
 #include <ublox_gps/adr_udr_product.hpp>
 #include <ublox_gps/utils.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 //
 // u-blox ADR devices, partially implemented
 //
-AdrUdrProduct::AdrUdrProduct(uint16_t nav_rate, uint16_t meas_rate, const std::string & frame_id, std::shared_ptr<diagnostic_updater::Updater> updater, rclcpp::Node* node)
-  : use_adr_(false), nav_rate_(nav_rate), meas_rate_(meas_rate), frame_id_(frame_id), updater_(updater), node_(node)
+AdrUdrProduct::AdrUdrProduct(
+  uint16_t nav_rate, uint16_t meas_rate, const std::string & frame_id,
+  std::shared_ptr<diagnostic_updater::Updater> updater,
+  rclcpp::Node * node)
+: use_adr_(false), nav_rate_(nav_rate), meas_rate_(meas_rate), frame_id_(frame_id),
+  updater_(updater), node_(node)
 {
   if (getRosBoolean(node_, "publish.esf.meas")) {
     imu_pub_ =
@@ -53,7 +58,8 @@ AdrUdrProduct::AdrUdrProduct(uint16_t nav_rate, uint16_t meas_rate, const std::s
   }
 }
 
-void AdrUdrProduct::getRosParams() {
+void AdrUdrProduct::getRosParams()
+{
   use_adr_ = getRosBoolean(node_, "use_adr");
   // Check the nav rate
   float nav_rate_hz = 1000.0 / (meas_rate_ * nav_rate_);
@@ -62,57 +68,68 @@ void AdrUdrProduct::getRosParams() {
   }
 }
 
-bool AdrUdrProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
+bool AdrUdrProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps)
+{
   if (!gps->setUseAdr(use_adr_)) {
-    throw std::runtime_error(std::string("Failed to ")
-                             + (use_adr_ ? "enable" : "disable") + "use_adr");
+    throw std::runtime_error(
+            std::string("Failed to ") +
+            (use_adr_ ? "enable" : "disable") + "use_adr");
   }
   return true;
 }
 
-void AdrUdrProduct::subscribe(std::shared_ptr<ublox_gps::Gps> gps) {
+void AdrUdrProduct::subscribe(std::shared_ptr<ublox_gps::Gps> gps)
+{
   // Subscribe to NAV ATT messages
   if (getRosBoolean(node_, "publish.nav.att")) {
-    gps->subscribe<ublox_msgs::msg::NavATT>([this](const ublox_msgs::msg::NavATT &m) { nav_att_pub_->publish(m); },
-                                       1);
+    gps->subscribe<ublox_msgs::msg::NavATT>(
+      [this](const ublox_msgs::msg::NavATT & m) {nav_att_pub_->publish(m);},
+      1);
   }
 
   // Subscribe to ESF INS messages
   if (getRosBoolean(node_, "publish.esf.ins")) {
-    gps->subscribe<ublox_msgs::msg::EsfINS>([this](const ublox_msgs::msg::EsfINS &m) { esf_ins_pub_->publish(m); },
-                                       1);
+    gps->subscribe<ublox_msgs::msg::EsfINS>(
+      [this](const ublox_msgs::msg::EsfINS & m) {esf_ins_pub_->publish(m);},
+      1);
   }
 
   // Subscribe to ESF Meas messages
   if (getRosBoolean(node_, "publish.esf.meas")) {
-    gps->subscribe<ublox_msgs::msg::EsfMEAS>([this](const ublox_msgs::msg::EsfMEAS &m) { esf_meas_pub_->publish(m); },
-                                        1);
+    gps->subscribe<ublox_msgs::msg::EsfMEAS>(
+      [this](const ublox_msgs::msg::EsfMEAS & m) {esf_meas_pub_->publish(m);},
+      1);
 
     // also publish sensor_msgs::Imu
-    gps->subscribe<ublox_msgs::msg::EsfMEAS>(std::bind(
-      &AdrUdrProduct::callbackEsfMEAS, this, std::placeholders::_1), 1);
+    gps->subscribe<ublox_msgs::msg::EsfMEAS>(
+      std::bind(
+        &AdrUdrProduct::callbackEsfMEAS, this, std::placeholders::_1), 1);
   }
 
   // Subscribe to ESF Raw messages
   if (getRosBoolean(node_, "publish.esf.raw")) {
-    gps->subscribe<ublox_msgs::msg::EsfRAW>([this](const ublox_msgs::msg::EsfRAW &m) { esf_raw_pub_->publish(m); },
-                                       1);
+    gps->subscribe<ublox_msgs::msg::EsfRAW>(
+      [this](const ublox_msgs::msg::EsfRAW & m) {esf_raw_pub_->publish(m);},
+      1);
   }
 
   // Subscribe to ESF Status messages
   if (getRosBoolean(node_, "publish.esf.status")) {
-    gps->subscribe<ublox_msgs::msg::EsfSTATUS>([this](const ublox_msgs::msg::EsfSTATUS &m) { esf_status_pub_->publish(m); },
-                                          1);
+    gps->subscribe<ublox_msgs::msg::EsfSTATUS>(
+      [this](const ublox_msgs::msg::EsfSTATUS & m) {esf_status_pub_->publish(m);},
+      1);
   }
 
   // Subscribe to HNR PVT messages
   if (getRosBoolean(node_, "publish.hnr.pvt")) {
-    gps->subscribe<ublox_msgs::msg::HnrPVT>([this](const ublox_msgs::msg::HnrPVT &m) { hnr_pvt_pub_->publish(m); },
-                                       1);
+    gps->subscribe<ublox_msgs::msg::HnrPVT>(
+      [this](const ublox_msgs::msg::HnrPVT & m) {hnr_pvt_pub_->publish(m);},
+      1);
   }
 }
 
-void AdrUdrProduct::callbackEsfMEAS(const ublox_msgs::msg::EsfMEAS &m) {
+void AdrUdrProduct::callbackEsfMEAS(const ublox_msgs::msg::EsfMEAS & m)
+{
   if (getRosBoolean(node_, "publish.esf.meas")) {
     imu_.header.stamp = node_->now();
     imu_.header.frame_id = frame_id_;
@@ -140,7 +157,7 @@ void AdrUdrProduct::callbackEsfMEAS(const ublox_msgs::msg::EsfMEAS &m) {
 
       if (data_type == 14) {
         if (data_sign == 1) {
-	  imu_.angular_velocity.x = 2048 - data_value * deg_per_sec;
+          imu_.angular_velocity.x = 2048 - data_value * deg_per_sec;
         } else {
           imu_.angular_velocity.x = data_sign * data_value * deg_per_sec;
         }
@@ -148,31 +165,31 @@ void AdrUdrProduct::callbackEsfMEAS(const ublox_msgs::msg::EsfMEAS &m) {
         //RCLCPP_INFO(node_->get_logger(), "data_sign: %f", data_sign);
         //RCLCPP_INFO(node_->get_logger(), "data_value: %u", data_value * m);
         if (data_sign == 1) {
-	  imu_.linear_acceleration.x = 8191 - data_value * m_per_sec_sq;
+          imu_.linear_acceleration.x = 8191 - data_value * m_per_sec_sq;
         } else {
           imu_.linear_acceleration.x = data_sign * data_value * m_per_sec_sq;
         }
       } else if (data_type == 13) {
         if (data_sign == 1) {
-	  imu_.angular_velocity.y = 2048 - data_value * deg_per_sec;
+          imu_.angular_velocity.y = 2048 - data_value * deg_per_sec;
         } else {
           imu_.angular_velocity.y = data_sign * data_value * deg_per_sec;
         }
       } else if (data_type == 17) {
         if (data_sign == 1) {
-	  imu_.linear_acceleration.y = 8191 - data_value * m_per_sec_sq;
+          imu_.linear_acceleration.y = 8191 - data_value * m_per_sec_sq;
         } else {
           imu_.linear_acceleration.y = data_sign * data_value * m_per_sec_sq;
         }
       } else if (data_type == 5) {
         if (data_sign == 1) {
-	  imu_.angular_velocity.z = 2048 - data_value * deg_per_sec;
+          imu_.angular_velocity.z = 2048 - data_value * deg_per_sec;
         } else {
           imu_.angular_velocity.z = data_sign * data_value * deg_per_sec;
         }
       } else if (data_type == 18) {
         if (data_sign == 1) {
-	  imu_.linear_acceleration.z = 8191 - data_value * m_per_sec_sq;
+          imu_.linear_acceleration.z = 8191 - data_value * m_per_sec_sq;
         } else {
           imu_.linear_acceleration.z = data_sign * data_value * m_per_sec_sq;
         }

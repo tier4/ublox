@@ -18,14 +18,19 @@
 #include <ublox_gps/gps.hpp>
 #include <ublox_gps/ublox_firmware.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Implements functions for firmware version 6.
  */
-class UbloxFirmware6 final : public UbloxFirmware {
- public:
-  explicit UbloxFirmware6(const std::string & frame_id, std::shared_ptr<diagnostic_updater::Updater> updater, std::shared_ptr<FixDiagnostic> freq_diag, std::shared_ptr<Gnss> gnss, rclcpp::Node* node);
+class UbloxFirmware6 final : public UbloxFirmware
+{
+public:
+  explicit UbloxFirmware6(
+    const std::string & frame_id,
+    std::shared_ptr<diagnostic_updater::Updater> updater,
+    std::shared_ptr<FixDiagnostic> freq_diag, std::shared_ptr<Gnss> gnss, rclcpp::Node * node);
 
   /**
    * @brief Sets the fix status service type to GPS.
@@ -43,14 +48,14 @@ class UbloxFirmware6 final : public UbloxFirmware {
    */
   void subscribe(std::shared_ptr<ublox_gps::Gps> gps) override;
 
- protected:
+protected:
   /**
    * @brief Updates fix diagnostic from NavPOSLLH, NavVELNED, and NavSOL
    * messages.
    */
-  void fixDiagnostic(diagnostic_updater::DiagnosticStatusWrapper& stat) override;
+  void fixDiagnostic(diagnostic_updater::DiagnosticStatusWrapper & stat) override;
 
- private:
+private:
   /**
    * @brief Publish the fix and call the fix diagnostic updater.
    *
@@ -58,7 +63,7 @@ class UbloxFirmware6 final : public UbloxFirmware {
    * message if publishing is enabled.
    * @param m the message to process
    */
-  void callbackNavPosLlh(const ublox_msgs::msg::NavPOSLLH& m);
+  void callbackNavPosLlh(const ublox_msgs::msg::NavPOSLLH & m);
 
   /**
    * @brief Update the last known velocity.
@@ -66,7 +71,7 @@ class UbloxFirmware6 final : public UbloxFirmware {
    * @details Publish the message if publishing is enabled.
    * @param m the message to process
    */
-  void callbackNavVelNed(const ublox_msgs::msg::NavVELNED& m);
+  void callbackNavVelNed(const ublox_msgs::msg::NavVELNED & m);
 
   /**
    * @brief Update the number of SVs used for the fix.
@@ -74,7 +79,7 @@ class UbloxFirmware6 final : public UbloxFirmware {
    * @details Publish the message if publishing is enabled.
    * @param m the message to process
    */
-  void callbackNavSol(const ublox_msgs::msg::NavSOL& m);
+  void callbackNavSol(const ublox_msgs::msg::NavSOL & m);
 
   //! The last received navigation position
   ublox_msgs::msg::NavPOSLLH last_nav_pos_;

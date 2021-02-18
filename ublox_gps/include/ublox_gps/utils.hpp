@@ -13,15 +13,17 @@
 
 #include <ublox_gps/mkgmtime.h>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Convert date/time to UTC time in seconds.
  */
 template<typename NavPVT>
-time_t toUtcSeconds(const NavPVT& msg) {
+time_t toUtcSeconds(const NavPVT & msg)
+{
   // Create TM struct for mkgmtime
-  struct tm time{};
+  struct tm time {};
   time.tm_year = msg.year - 1900;
   time.tm_mon = msg.month - 1;
   time.tm_mday = msg.day;
@@ -41,8 +43,9 @@ time_t toUtcSeconds(const NavPVT& msg) {
  * @param name the name of the parameter
  * @throws std::runtime_error if it is below the minimum
  */
-template <typename V, typename T>
-void checkMin(V val, T min, const std::string & name) {
+template<typename V, typename T>
+void checkMin(V val, T min, const std::string & name)
+{
   if (val < min) {
     std::stringstream oss;
     oss << "Invalid settings: " << name << " must be > " << min;
@@ -58,12 +61,13 @@ void checkMin(V val, T min, const std::string & name) {
  * @param name the name of the parameter
  * @throws std::runtime_error if it is out of bounds
  */
-template <typename V, typename T>
-void checkRange(V val, T min, T max, const std::string & name) {
+template<typename V, typename T>
+void checkRange(V val, T min, T max, const std::string & name)
+{
   if (val < min || val > max) {
     std::stringstream oss;
     oss << "Invalid settings: " << name << " must be in range [" << min <<
-        ", " << max << "].";
+      ", " << max << "].";
     throw std::runtime_error(oss.str());
   }
 }
@@ -76,9 +80,10 @@ void checkRange(V val, T min, T max, const std::string & name) {
  * @param name the name of the parameter
  * @throws std::runtime_error value it is out of bounds
  */
-template <typename V, typename T>
-void checkRange(std::vector<V> val, T min, T max, const std::string & name) {
-  for (size_t i = 0; i < val.size(); i++)  {
+template<typename V, typename T>
+void checkRange(std::vector<V> val, T min, T max, const std::string & name)
+{
+  for (size_t i = 0; i < val.size(); i++) {
     std::stringstream oss;
     oss << name << "[" << i << "]";
     checkRange(val[i], min, max, oss.str());
@@ -92,8 +97,9 @@ void checkRange(std::vector<V> val, T min, T max, const std::string & name) {
  * @throws std::runtime_error if the parameter is out of bounds
  * @return true if found, false if not found.
  */
-template <typename U>
-bool getRosUint(rclcpp::Node* node, const std::string& key, U &u) {
+template<typename U>
+bool getRosUint(rclcpp::Node * node, const std::string & key, U & u)
+{
   rclcpp::Parameter parameter;
   if (!node->get_parameter(key, parameter)) {
     return false;
@@ -116,8 +122,9 @@ bool getRosUint(rclcpp::Node* node, const std::string& key, U &u) {
  * @throws std::runtime_error if the parameter is out of bounds
  * @return true if found, false if not found.
  */
-template <typename U, typename V>
-void getRosUint(rclcpp::Node* node, const std::string& key, U &u, V default_val) {
+template<typename U, typename V>
+void getRosUint(rclcpp::Node * node, const std::string & key, U & u, V default_val)
+{
   if (!getRosUint(node, key, u)) {
     u = default_val;
   }
@@ -128,8 +135,9 @@ void getRosUint(rclcpp::Node* node, const std::string& key, U &u, V default_val)
  * @throws std::runtime_error if the parameter is out of bounds.
  * @return true if found, false if not found.
  */
-template <typename U>
-bool getRosUint(rclcpp::Node* node, const std::string& key, std::vector<U> &u) {
+template<typename U>
+bool getRosUint(rclcpp::Node * node, const std::string & key, std::vector<U> & u)
+{
   std::vector<U> param;
   if (!node->get_parameter(key, param)) {
     return false;
@@ -145,7 +153,7 @@ bool getRosUint(rclcpp::Node* node, const std::string& key, std::vector<U> &u) {
   return true;
 }
 
-static inline bool getRosBoolean(rclcpp::Node* node, const std::string &name)
+static inline bool getRosBoolean(rclcpp::Node * node, const std::string & name)
 {
   bool ret;
   if (!node->get_parameter(name, ret)) {
@@ -156,8 +164,8 @@ static inline bool getRosBoolean(rclcpp::Node* node, const std::string &name)
   return ret;
 }
 
-template <typename T>
-T declareRosIntParameter(rclcpp::Node* node, const std::string& name, int64_t default_value)
+template<typename T>
+T declareRosIntParameter(rclcpp::Node * node, const std::string & name, int64_t default_value)
 {
   rcl_interfaces::msg::ParameterDescriptor param_desc;
   param_desc.name = name;
@@ -170,7 +178,7 @@ T declareRosIntParameter(rclcpp::Node* node, const std::string& name, int64_t de
   return node->declare_parameter(name, default_value, param_desc);
 }
 
-static inline bool isRosParameterSet(rclcpp::Node* node, const std::string& name)
+static inline bool isRosParameterSet(rclcpp::Node * node, const std::string & name)
 {
   rclcpp::Parameter param;
   node->get_parameter(name, param);

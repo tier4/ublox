@@ -16,14 +16,20 @@
 #include <ublox_gps/rtcm.hpp>
 #include <ublox_gps/utils.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 //
 // u-blox High Precision GNSS Reference Station
 //
 
-HpgRefProduct::HpgRefProduct(uint16_t nav_rate, uint16_t meas_rate, std::shared_ptr<diagnostic_updater::Updater> updater, std::vector<ublox_gps::Rtcm> rtcms, rclcpp::Node* node)
-  : tmode3_(0), lla_flag_(false), fixed_pos_acc_(0.0), svin_reset_(false), sv_in_min_dur_(0), sv_in_acc_lim_(0.0), nav_rate_(nav_rate), meas_rate_(meas_rate), updater_(updater), rtcms_(rtcms), node_(node)
+HpgRefProduct::HpgRefProduct(
+  uint16_t nav_rate, uint16_t meas_rate,
+  std::shared_ptr<diagnostic_updater::Updater> updater, std::vector<ublox_gps::Rtcm> rtcms,
+  rclcpp::Node * node)
+: tmode3_(0), lla_flag_(false), fixed_pos_acc_(0.0), svin_reset_(false), sv_in_min_dur_(0),
+  sv_in_acc_lim_(0.0), nav_rate_(nav_rate), meas_rate_(meas_rate), updater_(updater),
+  rtcms_(rtcms), node_(node)
 {
   if (getRosBoolean(node_, "publish.nav.svin")) {
     navsvin_pub_ =
@@ -36,7 +42,8 @@ HpgRefProduct::HpgRefProduct(uint16_t nav_rate, uint16_t meas_rate, std::shared_
  * @throws std::runtime_error if the parameter is out of bounds.
  * @return true if found, false if not found.
  */
-bool getRosInt(rclcpp::Node* node, const std::string& key, std::vector<int8_t> &i) {
+bool getRosInt(rclcpp::Node * node, const std::string & key, std::vector<int8_t> & i)
+{
   std::vector<int64_t> param;
   if (!node->get_parameter(key, param)) {
     return false;
@@ -52,7 +59,8 @@ bool getRosInt(rclcpp::Node* node, const std::string& key, std::vector<int8_t> &
   return true;
 }
 
-void HpgRefProduct::getRosParams() {
+void HpgRefProduct::getRosParams()
+{
   if (getRosBoolean(node_, "config_on_startup")) {
     if (nav_rate_ * meas_rate_ != 1000) {
       RCLCPP_WARN(node_->get_logger(), "For HPG Ref devices, nav_rate should be exactly 1 Hz.");
@@ -64,40 +72,48 @@ void HpgRefProduct::getRosParams() {
 
     if (tmode3_ == ublox_msgs::msg::CfgTMODE3::FLAGS_MODE_FIXED) {
       if (!node_->get_parameter("arp.position", arp_position_)) {
-        throw std::runtime_error(std::string("Invalid settings: arp.position ")
-                                + "must be set if TMODE3 is fixed");
+        throw std::runtime_error(
+                std::string("Invalid settings: arp.position ") +
+                "must be set if TMODE3 is fixed");
       }
       if (!getRosInt(node_, "arp.position_hp", arp_position_hp_)) {
-        throw std::runtime_error(std::string("Invalid settings: arp.position_hp ")
-                                + "must be set if TMODE3 is fixed");
+        throw std::runtime_error(
+                std::string("Invalid settings: arp.position_hp ") +
+                "must be set if TMODE3 is fixed");
       }
       if (!node_->get_parameter("arp.acc", fixed_pos_acc_)) {
-        throw std::runtime_error(std::string("Invalid settings: arp.acc ")
-                                + "must be set if TMODE3 is fixed");
+        throw std::runtime_error(
+                std::string("Invalid settings: arp.acc ") +
+                "must be set if TMODE3 is fixed");
       }
       if (!node_->get_parameter("arp.lla_flag", lla_flag_)) {
-        RCLCPP_WARN(node_->get_logger(), "arp/lla_flag param not set, assuming ARP coordinates are %s",
-                "in ECEF");
+        RCLCPP_WARN(
+          node_->get_logger(), "arp/lla_flag param not set, assuming ARP coordinates are %s",
+          "in ECEF");
         lla_flag_ = false;
       }
     } else if (tmode3_ == ublox_msgs::msg::CfgTMODE3::FLAGS_MODE_SURVEY_IN) {
       svin_reset_ = getRosBoolean(node_, "sv_in.reset");
       if (!getRosUint(node_, "sv_in.min_dur", sv_in_min_dur_)) {
-        throw std::runtime_error(std::string("Invalid settings: sv_in/min_dur ")
-                                + "must be set if TMODE3 is survey-in");
+        throw std::runtime_error(
+                std::string("Invalid settings: sv_in/min_dur ") +
+                "must be set if TMODE3 is survey-in");
       }
       if (!node_->get_parameter("sv_in.acc_lim", sv_in_acc_lim_)) {
-        throw std::runtime_error(std::string("Invalid settings: sv_in/acc_lim ")
-                                + "must be set if TMODE3 is survey-in");
+        throw std::runtime_error(
+                std::string("Invalid settings: sv_in/acc_lim ") +
+                "must be set if TMODE3 is survey-in");
       }
     } else if (tmode3_ != ublox_msgs::msg::CfgTMODE3::FLAGS_MODE_DISABLED) {
-      throw std::runtime_error(std::string("tmode3 param invalid. See CfgTMODE3")
-                              + " flag constants for possible values.");
+      throw std::runtime_error(
+              std::string("tmode3 param invalid. See CfgTMODE3") +
+              " flag constants for possible values.");
     }
   }
 }
 
-bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
+bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps)
+{
   // Configure TMODE3
   if (tmode3_ == ublox_msgs::msg::CfgTMODE3::FLAGS_MODE_DISABLED) {
     if (!gps->disableTmode3()) {
@@ -105,8 +121,10 @@ bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
     }
     mode_ = DISABLED;
   } else if (tmode3_ == ublox_msgs::msg::CfgTMODE3::FLAGS_MODE_FIXED) {
-    if (!gps->configTmode3Fixed(lla_flag_, arp_position_, arp_position_hp_,
-                               fixed_pos_acc_)) {
+    if (!gps->configTmode3Fixed(
+        lla_flag_, arp_position_, arp_position_hp_,
+        fixed_pos_acc_))
+    {
       throw std::runtime_error("Failed to set TMODE3 to fixed.");
     }
     if (!gps->configRtcm(rtcms_)) {
@@ -117,8 +135,9 @@ bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
     if (!svin_reset_) {
       ublox_msgs::msg::NavSVIN nav_svin;
       if (!gps->poll(nav_svin)) {
-        throw std::runtime_error(std::string("Failed to poll NavSVIN while") +
-                                 " configuring survey-in");
+        throw std::runtime_error(
+                std::string("Failed to poll NavSVIN while") +
+                " configuring survey-in");
       }
       // Don't reset survey-in if it's already active
       if (nav_svin.active) {
@@ -132,12 +151,14 @@ bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
       }
       ublox_msgs::msg::NavPVT nav_pvt;
       if (!gps->poll(nav_pvt, std::vector<uint8_t>(), std::chrono::milliseconds(15000))) {
-        throw std::runtime_error(std::string("Failed to poll NavPVT while") +
-                                 " configuring survey-in");
+        throw std::runtime_error(
+                std::string("Failed to poll NavPVT while") +
+                " configuring survey-in");
       }
       // Don't reset survey in if in time mode with a good fix
-      if (nav_pvt.fix_type == ublox_msgs::msg::NavPVT::FIX_TYPE_TIME_ONLY
-          && nav_pvt.flags & ublox_msgs::msg::NavPVT::FLAGS_GNSS_FIX_OK) {
+      if (nav_pvt.fix_type == ublox_msgs::msg::NavPVT::FIX_TYPE_TIME_ONLY &&
+        nav_pvt.flags & ublox_msgs::msg::NavPVT::FLAGS_GNSS_FIX_OK)
+      {
         setTimeMode(gps);
         return true;
       }
@@ -151,12 +172,13 @@ bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
     }
     // Set nav rate to 1 Hz during survey in
     if (!gps->configRate(meas_rate_temp, 1000 / meas_rate_temp)) {
-      throw std::runtime_error(std::string("Failed to set nav rate to 1 Hz") +
-                               "before setting TMODE3 to survey-in.");
+      throw std::runtime_error(
+              std::string("Failed to set nav rate to 1 Hz") +
+              "before setting TMODE3 to survey-in.");
     }
     // As recommended in the documentation, first disable, then set to survey in
     if (!gps->disableTmode3()) {
-      RCLCPP_ERROR(node_->get_logger(), "Failed to disable TMODE3 before setting to survey-in.");
+      RCLCPP_WARN(node_->get_logger(), "Failed to disable TMODE3 before setting to survey-in.");
     } else {
       mode_ = DISABLED;
     }
@@ -169,15 +191,18 @@ bool HpgRefProduct::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
   return true;
 }
 
-void HpgRefProduct::subscribe(std::shared_ptr<ublox_gps::Gps> gps) {
+void HpgRefProduct::subscribe(std::shared_ptr<ublox_gps::Gps> gps)
+{
   // Subscribe to Nav Survey-In
   // Save off the gps pointer so we can use it in the callback later.
   gps_ = gps;
-  gps->subscribe<ublox_msgs::msg::NavSVIN>(std::bind(
+  gps->subscribe<ublox_msgs::msg::NavSVIN>(
+    std::bind(
       &HpgRefProduct::callbackNavSvIn, this, std::placeholders::_1), 1);
 }
 
-void HpgRefProduct::callbackNavSvIn(const ublox_msgs::msg::NavSVIN& m) {
+void HpgRefProduct::callbackNavSvIn(const ublox_msgs::msg::NavSVIN & m)
+{
   if (getRosBoolean(node_, "publish.nav.svin")) {
     navsvin_pub_->publish(m);
   }
@@ -191,35 +216,39 @@ void HpgRefProduct::callbackNavSvIn(const ublox_msgs::msg::NavSVIN& m) {
   updater_->force_update();
 }
 
-bool HpgRefProduct::setTimeMode(std::shared_ptr<ublox_gps::Gps> gps) {
+bool HpgRefProduct::setTimeMode(std::shared_ptr<ublox_gps::Gps> gps)
+{
   RCLCPP_INFO(node_->get_logger(), "Setting mode (internal state) to Time Mode");
   mode_ = TIME;
 
   // Set the Measurement & nav rate to user config
   // (survey-in sets nav_rate to 1 Hz regardless of user setting)
   if (!gps->configRate(meas_rate_, nav_rate_)) {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to set measurement rate to %d ms navigation rate to %d cycles",
-                 meas_rate_, nav_rate_);
+    RCLCPP_WARN(
+      node_->get_logger(), "Failed to set measurement rate to %d ms navigation rate to %d cycles",
+      meas_rate_, nav_rate_);
   }
   // Enable the RTCM out messages
   if (!gps->configRtcm(rtcms_)) {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to configure RTCM IDs");
+    RCLCPP_WARN(node_->get_logger(), "Failed to configure RTCM IDs");
     return false;
   }
   return true;
 }
 
-void HpgRefProduct::initializeRosDiagnostics() {
+void HpgRefProduct::initializeRosDiagnostics()
+{
   updater_->add("TMODE3", this, &HpgRefProduct::tmode3Diagnostics);
   updater_->force_update();
 }
 
 void HpgRefProduct::tmode3Diagnostics(
-    diagnostic_updater::DiagnosticStatusWrapper& stat) {
+  diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
   if (mode_ == INIT) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "Not configured";
-  } else if (mode_ == DISABLED){
+  } else if (mode_ == DISABLED) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     stat.message = "Disabled";
   } else if (mode_ == SURVEY_IN) {

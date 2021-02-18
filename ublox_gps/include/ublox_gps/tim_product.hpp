@@ -15,15 +15,19 @@
 #include <ublox_gps/component_interface.hpp>
 #include <ublox_gps/gps.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Implements functions for Time Sync products.
  * @todo partially implemented
  */
-class TimProduct final : public virtual ComponentInterface {
- public:
-  explicit TimProduct(const std::string & frame_id, std::shared_ptr<diagnostic_updater::Updater> updater, rclcpp::Node* node);
+class TimProduct final : public virtual ComponentInterface
+{
+public:
+  explicit TimProduct(
+    const std::string & frame_id,
+    std::shared_ptr<diagnostic_updater::Updater> updater, rclcpp::Node * node);
 
   /**
    * @brief Get the Time Sync parameters.
@@ -50,12 +54,12 @@ class TimProduct final : public virtual ComponentInterface {
    */
   void subscribe(std::shared_ptr<ublox_gps::Gps> gps) override;
 
- private:
+private:
   /**
    * @brief
    * @details Publish recieved TimTM2 messages if enabled
    */
-  void callbackTimTM2(const ublox_msgs::msg::TimTM2 &m);
+  void callbackTimTM2(const ublox_msgs::msg::TimTM2 & m);
 
   sensor_msgs::msg::TimeReference t_ref_;
 
@@ -67,7 +71,7 @@ class TimProduct final : public virtual ComponentInterface {
   std::string frame_id_;
   std::shared_ptr<diagnostic_updater::Updater> updater_;
 
-  rclcpp::Node* node_;
+  rclcpp::Node * node_;
 };
 
 }  // namespace ublox_node

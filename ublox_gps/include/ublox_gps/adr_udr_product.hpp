@@ -20,15 +20,19 @@
 #include <ublox_gps/component_interface.hpp>
 #include <ublox_gps/gps.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Implements functions for Automotive Dead Reckoning (ADR) and
  * Untethered Dead Reckoning (UDR) Devices.
  */
-class AdrUdrProduct final : public virtual ComponentInterface {
- public:
-  explicit AdrUdrProduct(uint16_t nav_rate, uint16_t meas_rate, const std::string & frame_id, std::shared_ptr<diagnostic_updater::Updater> updater, rclcpp::Node* node);
+class AdrUdrProduct final : public virtual ComponentInterface
+{
+public:
+  explicit AdrUdrProduct(
+    uint16_t nav_rate, uint16_t meas_rate, const std::string & frame_id,
+    std::shared_ptr<diagnostic_updater::Updater> updater, rclcpp::Node * node);
 
   /**
    * @brief Get the ADR/UDR parameters.
@@ -48,7 +52,8 @@ class AdrUdrProduct final : public virtual ComponentInterface {
    * @brief Initialize the ROS diagnostics for the ADR/UDR device.
    * @todo unimplemented
    */
-  void initializeRosDiagnostics() override {
+  void initializeRosDiagnostics() override
+  {
     // RCLCPP_WARN("ROS Diagnostics specific to u-blox ADR/UDR devices is %s",
     //          "unimplemented. See AdrUdrProduct class in node.hpp & node.cpp.");
   }
@@ -61,14 +66,14 @@ class AdrUdrProduct final : public virtual ComponentInterface {
    */
   void subscribe(std::shared_ptr<ublox_gps::Gps> gps) override;
 
- private:
+private:
   //! Whether or not to enable dead reckoning
   bool use_adr_;
 
   sensor_msgs::msg::Imu imu_;
   sensor_msgs::msg::TimeReference t_ref_;
 
-  void callbackEsfMEAS(const ublox_msgs::msg::EsfMEAS &m);
+  void callbackEsfMEAS(const ublox_msgs::msg::EsfMEAS & m);
 
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
   rclcpp::Publisher<sensor_msgs::msg::TimeReference>::SharedPtr time_ref_pub_;
@@ -84,7 +89,7 @@ class AdrUdrProduct final : public virtual ComponentInterface {
 
   std::string frame_id_;
   std::shared_ptr<diagnostic_updater::Updater> updater_;
-  rclcpp::Node* node_;
+  rclcpp::Node * node_;
 };
 
 }  // namespace ublox_node

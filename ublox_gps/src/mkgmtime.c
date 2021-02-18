@@ -88,16 +88,18 @@
 
 #include "ublox_gps/mkgmtime.h"
 
-static int tmcomp(const struct tm * const  atmp,
-                  const struct tm * const btmp)
+static int tmcomp(
+  const struct tm * const atmp,
+  const struct tm * const btmp)
 {
   int result;
 
   if ((result = (atmp->tm_year - btmp->tm_year)) == 0 &&
-      (result = (atmp->tm_mon - btmp->tm_mon)) == 0 &&
-      (result = (atmp->tm_mday - btmp->tm_mday)) == 0 &&
-      (result = (atmp->tm_hour - btmp->tm_hour)) == 0 &&
-      (result = (atmp->tm_min - btmp->tm_min)) == 0) {
+    (result = (atmp->tm_mon - btmp->tm_mon)) == 0 &&
+    (result = (atmp->tm_mday - btmp->tm_mday)) == 0 &&
+    (result = (atmp->tm_hour - btmp->tm_hour)) == 0 &&
+    (result = (atmp->tm_min - btmp->tm_min)) == 0)
+  {
     result = atmp->tm_sec - btmp->tm_sec;
   }
   return result;
@@ -105,11 +107,11 @@ static int tmcomp(const struct tm * const  atmp,
 
 time_t mkgmtime(struct tm * const tmp)
 {
-  int            dir;
-  int            bits;
-  int            saved_seconds;
-  time_t              t;
-  struct tm           yourtm, *mytm;
+  int dir;
+  int bits;
+  int saved_seconds;
+  time_t t;
+  struct tm yourtm, * mytm;
 
   yourtm = *tmp;
   saved_seconds = yourtm.tm_sec;
@@ -119,8 +121,7 @@ time_t mkgmtime(struct tm * const tmp)
    * (this works regardless of whether time_t is
    * signed or unsigned, though lint complains if unsigned).
   */
-  for (bits = 0, t = 1; t > 0; ++bits, t <<= 1)
-  {
+  for (bits = 0, t = 1; t > 0; ++bits, t <<= 1) {
   }
 
   /*
@@ -150,11 +151,9 @@ time_t mkgmtime(struct tm * const tmp)
       }
       if (bits < 0) {
         --t;
-      }
-      else if (dir > 0) {
+      } else if (dir > 0) {
         t -= (time_t) 1 << bits;
-      }
-      else {
+      } else {
         t += (time_t) 1 << bits;
       }
       continue;

@@ -3,9 +3,11 @@
 
 #include <cstdint>
 
-namespace ublox_gps {
+namespace ublox_gps
+{
 
-struct Rtcm {
+struct Rtcm
+{
   //! ID of RTCM out message to configure.
   uint8_t id;
   //! Rate of RTCM out message.

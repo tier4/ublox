@@ -4,17 +4,19 @@
 #include <set>
 #include <string>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
-class Gnss final {
+class Gnss final
+{
 public:
   Gnss() = default;
   ~Gnss() = default;
 
-  Gnss(Gnss &&c) = delete;
-  Gnss &operator=(Gnss &&c) = delete;
-  Gnss(const Gnss &c) = delete;
-  Gnss &operator=(const Gnss &c) = delete;
+  Gnss(Gnss && c) = delete;
+  Gnss & operator=(Gnss && c) = delete;
+  Gnss(const Gnss & c) = delete;
+  Gnss & operator=(const Gnss & c) = delete;
 
   void add(const std::string & gnss);
   bool isSupported(const std::string & gnss);

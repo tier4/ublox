@@ -13,18 +13,23 @@
 #include <ublox_gps/gps.hpp>
 #include <ublox_gps/rtcm.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Implements functions for High Precision GNSS Reference station
  * devices.
  */
-class HpgRefProduct: public virtual ComponentInterface {
- public:
+class HpgRefProduct : public virtual ComponentInterface
+{
+public:
   //! Default measurement period for HPG devices
   constexpr static uint16_t kDefaultMeasPeriod = 250;
 
-  explicit HpgRefProduct(uint16_t nav_rate, uint16_t meas_rate, std::shared_ptr<diagnostic_updater::Updater> updater, std::vector<ublox_gps::Rtcm> rtcms, rclcpp::Node* node);
+  explicit HpgRefProduct(
+    uint16_t nav_rate, uint16_t meas_rate,
+    std::shared_ptr<diagnostic_updater::Updater> updater, std::vector<ublox_gps::Rtcm> rtcms,
+    rclcpp::Node * node);
 
   /**
    * @brief Get the ROS parameters specific to the Reference Station
@@ -67,16 +72,16 @@ class HpgRefProduct: public virtual ComponentInterface {
    * configured RTCM messages. Publish received Nav SVIN messages if enabled.
    * @param m the message to process
    */
-  void callbackNavSvIn(const ublox_msgs::msg::NavSVIN& m);
+  void callbackNavSvIn(const ublox_msgs::msg::NavSVIN & m);
 
- protected:
+protected:
   /**
    * @brief Update the TMODE3 diagnostics.
    *
    * @details Updates the status of the survey-in if in  survey-in mode or the
    * RTCM messages if in time mode.
    */
-  void tmode3Diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat);
+  void tmode3Diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
    * @brief Set the device mode to time mode (internal state variable).
@@ -121,7 +126,8 @@ class HpgRefProduct: public virtual ComponentInterface {
   float sv_in_acc_lim_;
 
   //! Status of device time mode
-  enum {
+  enum
+  {
     INIT, //!< Initialization mode (before configuration)
     FIXED, //!< Fixed mode (should switch to time mode almost immediately)
     DISABLED, //!< Time mode disabled
@@ -137,7 +143,7 @@ class HpgRefProduct: public virtual ComponentInterface {
 
   std::vector<ublox_gps::Rtcm> rtcms_;
   std::shared_ptr<ublox_gps::Gps> gps_;
-  rclcpp::Node* node_;
+  rclcpp::Node * node_;
 };
 
 }  // namespace ublox_node

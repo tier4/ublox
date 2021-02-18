@@ -41,7 +41,8 @@
 // Raw Data Stream (feature from TUC-ProAut)
 //
 
-int main(int argc, char** argv) {
+int main(int argc, char ** argv)
+{
 
   rclcpp::init(argc, argv);
 

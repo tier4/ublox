@@ -2,7 +2,8 @@
 
 #include <ublox_gps/gnss.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 void Gnss::add(const std::string & gnss)
 {

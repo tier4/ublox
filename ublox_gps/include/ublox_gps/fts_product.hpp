@@ -35,18 +35,21 @@
 #include <ublox_gps/component_interface.hpp>
 #include <ublox_gps/gps.hpp>
 
-namespace ublox_node {
+namespace ublox_node
+{
 
 /**
  * @brief Implements functions for FTS products. Currently unimplemented.
  * @todo Unimplemented.
  */
-class FtsProduct final : public virtual ComponentInterface {
+class FtsProduct final : public virtual ComponentInterface
+{
   /**
    * @brief Get the FTS parameters.
    * @todo Currently unimplemented.
    */
-  void getRosParams() override {
+  void getRosParams() override
+  {
     // RCLCPP_WARN("Functionality specific to u-blox FTS devices is %s",
     //          "unimplemented. See FtsProduct class in node.hpp & node.cpp.");
   }
@@ -55,7 +58,8 @@ class FtsProduct final : public virtual ComponentInterface {
    * @brief Configure FTS settings.
    * @todo Currently unimplemented.
    */
-  bool configureUblox(std::shared_ptr<ublox_gps::Gps> gps) override {
+  bool configureUblox(std::shared_ptr<ublox_gps::Gps> gps) override
+  {
     (void)gps;
     return false;
   }
@@ -70,7 +74,8 @@ class FtsProduct final : public virtual ComponentInterface {
    * @brief Subscribe to FTS messages.
    * @todo Currently unimplemented.
    */
-  void subscribe(std::shared_ptr<ublox_gps::Gps> gps) override {
+  void subscribe(std::shared_ptr<ublox_gps::Gps> gps) override
+  {
     (void)gps;
   }
 };

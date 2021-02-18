@@ -47,59 +47,62 @@
 
 #include "worker.hpp"
 
-namespace ublox_gps {
+namespace ublox_gps
+{
 
 /**
  * @brief Handles Asynchronous I/O reading and writing.
  */
-template <typename StreamT>
-class AsyncWorker final : public Worker {
- public:
+template<typename StreamT>
+class AsyncWorker final : public Worker
+{
+public:
   /**
    * @brief Construct an Asynchronous I/O worker.
    * @param stream the stream for th I/O service
    * @param io_service the I/O service
    * @param buffer_size the size of the input and output buffers
    */
-  explicit AsyncWorker(std::shared_ptr<StreamT> stream,
-                       std::shared_ptr<asio::io_service> io_service,
-                       std::size_t buffer_size,
-                       int debug,
-                       const rclcpp::Logger& logger);
+  explicit AsyncWorker(
+    std::shared_ptr<StreamT> stream,
+    std::shared_ptr<asio::io_service> io_service,
+    std::size_t buffer_size,
+    int debug,
+    const rclcpp::Logger & logger);
   ~AsyncWorker() override;
 
-  AsyncWorker(AsyncWorker &&c) = delete;
-  AsyncWorker &operator=(AsyncWorker &&c) = delete;
-  AsyncWorker(const AsyncWorker &c) = delete;
-  AsyncWorker &operator=(const AsyncWorker &c) = delete;
+  AsyncWorker(AsyncWorker && c) = delete;
+  AsyncWorker & operator=(AsyncWorker && c) = delete;
+  AsyncWorker(const AsyncWorker & c) = delete;
+  AsyncWorker & operator=(const AsyncWorker & c) = delete;
 
   /**
    * @brief Set the callback function which handles input messages.
    * @param callback the read callback which handles received messages
    */
-  void setCallback(const WorkerCallback& callback) override { read_callback_ = callback; }
+  void setCallback(const WorkerCallback & callback) override {read_callback_ = callback;}
 
   /**
    * @brief Set the callback function which handles raw data.
    * @param callback the write callback which handles raw data
    */
-  void setRawDataCallback(const WorkerRawCallback& callback) override { raw_callback_ = callback; }
+  void setRawDataCallback(const WorkerRawCallback & callback) override {raw_callback_ = callback;}
 
   /**
    * @brief Send the data bytes via the I/O stream.
    * @param data the buffer of data bytes to send
    * @param size the size of the buffer
    */
-  bool send(const unsigned char* data, const unsigned int size) override;
+  bool send(const unsigned char * data, const unsigned int size) override;
   /**
    * @brief Wait for incoming messages.
    * @param timeout the maximum time to wait
    */
-  void wait(const std::chrono::milliseconds& timeout) override;
+  void wait(const std::chrono::milliseconds & timeout) override;
 
-  bool isOpen() const override { return stream_->is_open(); }
+  bool isOpen() const override {return stream_->is_open();}
 
- private:
+private:
   /**
    * @brief Read the input stream.
    */
@@ -110,7 +113,7 @@ class AsyncWorker final : public Worker {
    * @param error_code an error code for read failures
    * @param bytes_received the number of bytes received
    */
-  void readEnd(const asio::error_code& error, std::size_t bytes_transferred);
+  void readEnd(const asio::error_code & error, std::size_t bytes_transferred);
 
   /**
    * @brief Send all the data in the output buffer.
@@ -136,7 +139,7 @@ class AsyncWorker final : public Worker {
   std::vector<unsigned char> out_; //!< The output buffer
 
   std::shared_ptr<std::thread> background_thread_; //!< thread for the I/O
-                                                       //!< service
+  //!< service
   WorkerCallback read_callback_; //!< Callback function to handle received messages
   WorkerRawCallback raw_callback_; //!< Callback function to handle raw data
 
@@ -145,41 +148,48 @@ class AsyncWorker final : public Worker {
   int debug_; //!< Used to determine which debug messages to display
 
   rclcpp::Logger logger_;
+  rclcpp::Clock rclcpp_clock_ = rclcpp::Clock(RCL_ROS_TIME);
 };
 
-template <typename StreamT>
-AsyncWorker<StreamT>::AsyncWorker(std::shared_ptr<StreamT> stream,
-        std::shared_ptr<asio::io_service> io_service,
-        std::size_t buffer_size,
-        int debug,
-        const rclcpp::Logger& logger)
-    : stream_(stream), io_service_(io_service), in_buffer_size_(0), stopping_(false), debug_(debug), logger_(logger) {
+template<typename StreamT>
+AsyncWorker<StreamT>::AsyncWorker(
+  std::shared_ptr<StreamT> stream,
+  std::shared_ptr<asio::io_service> io_service,
+  std::size_t buffer_size,
+  int debug,
+  const rclcpp::Logger & logger)
+: stream_(stream), io_service_(io_service), in_buffer_size_(0), stopping_(false), debug_(debug),
+  logger_(logger)
+{
   in_.resize(buffer_size);
 
   out_.reserve(buffer_size);
 
   io_service_->post(std::bind(&AsyncWorker<StreamT>::doRead, this));
-  background_thread_ = std::make_shared<std::thread>([this]{ io_service_->run(); });
+  background_thread_ = std::make_shared<std::thread>([this] {io_service_->run();});
 }
 
-template <typename StreamT>
-AsyncWorker<StreamT>::~AsyncWorker() {
+template<typename StreamT>
+AsyncWorker<StreamT>::~AsyncWorker()
+{
   io_service_->post(std::bind(&AsyncWorker<StreamT>::doClose, this));
   background_thread_->join();
   //io_service_->reset();
 }
 
-template <typename StreamT>
-bool AsyncWorker<StreamT>::send(const unsigned char* data,
-                                const unsigned int size) {
+template<typename StreamT>
+bool AsyncWorker<StreamT>::send(
+  const unsigned char * data,
+  const unsigned int size)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
   if (size == 0) {
-    RCLCPP_ERROR(logger_, "Ublox AsyncWorker::send: Size of message to send is 0");
+    RCLCPP_WARN(logger_, "Ublox AsyncWorker::send: Size of message to send is 0");
     return true;
   }
 
   if (out_.capacity() - out_.size() < size) {
-    RCLCPP_ERROR(logger_, "Ublox AsyncWorker::send: Output buffer too full to send message");
+    RCLCPP_WARN(logger_, "Ublox AsyncWorker::send: Output buffer too full to send message");
     return false;
   }
   out_.insert(out_.end(), data, data + size);
@@ -188,8 +198,9 @@ bool AsyncWorker<StreamT>::send(const unsigned char* data,
   return true;
 }
 
-template <typename StreamT>
-void AsyncWorker<StreamT>::doWrite() {
+template<typename StreamT>
+void AsyncWorker<StreamT>::doWrite()
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
   // Do nothing if out buffer is empty
   if (out_.size() == 0) {
@@ -202,7 +213,8 @@ void AsyncWorker<StreamT>::doWrite() {
     // Print the data that was sent
     std::ostringstream oss;
     for (std::vector<unsigned char>::iterator it = out_.begin();
-         it != out_.end(); ++it) {
+      it != out_.end(); ++it)
+    {
       oss << std::hex << static_cast<unsigned int>(*it) << " ";
     }
     RCLCPP_DEBUG(logger_, "U-Blox sent %li bytes: \n%s", out_.size(), oss.str().c_str());
@@ -212,8 +224,9 @@ void AsyncWorker<StreamT>::doWrite() {
   write_condition_.notify_all();
 }
 
-template <typename StreamT>
-void AsyncWorker<StreamT>::doRead() {
+template<typename StreamT>
+void AsyncWorker<StreamT>::doRead()
+{
   std::lock_guard<std::mutex> lock(read_mutex_);
   if (in_.size() - in_buffer_size_ == 0) {
     // In some circumstances, it is possible that there is no room left in the
@@ -226,24 +239,29 @@ void AsyncWorker<StreamT>::doRead() {
   }
 
   stream_->async_read_some(
-      asio::buffer(in_.data() + in_buffer_size_,
-                   in_.size() - in_buffer_size_),
-      std::bind(&AsyncWorker<StreamT>::readEnd, this,
-                std::placeholders::_1, std::placeholders::_2));
+    asio::buffer(
+      in_.data() + in_buffer_size_,
+      in_.size() - in_buffer_size_),
+    std::bind(
+      &AsyncWorker<StreamT>::readEnd, this,
+      std::placeholders::_1, std::placeholders::_2));
 }
 
-template <typename StreamT>
-void AsyncWorker<StreamT>::readEnd(const asio::error_code& error,
-                                   std::size_t bytes_transferred) {
+template<typename StreamT>
+void AsyncWorker<StreamT>::readEnd(
+  const asio::error_code & error,
+  std::size_t bytes_transferred)
+{
   std::lock_guard<std::mutex> lock(read_mutex_);
   if (error) {
-    RCLCPP_ERROR(logger_, "U-Blox ASIO input buffer read error: %s, %li",
-                 error.message().c_str(),
-                 bytes_transferred);
+    RCLCPP_WARN_THROTTLE(
+      logger_, rclcpp_clock_, 5000, "U-Blox ASIO input buffer read error: %s, %li",
+      error.message().c_str(),
+      bytes_transferred);
   } else if (bytes_transferred > 0) {
     in_buffer_size_ += bytes_transferred;
 
-    unsigned char *pRawDataStart = &(*(in_.begin() + (in_buffer_size_ - bytes_transferred)));
+    unsigned char * pRawDataStart = &(*(in_.begin() + (in_buffer_size_ - bytes_transferred)));
     std::size_t raw_data_stream_size = bytes_transferred;
 
     if (raw_callback_) {
@@ -253,12 +271,14 @@ void AsyncWorker<StreamT>::readEnd(const asio::error_code& error,
     if (debug_ >= 4) {
       std::ostringstream oss;
       for (std::vector<unsigned char>::iterator it =
-               in_.begin() + in_buffer_size_ - bytes_transferred;
-           it != in_.begin() + in_buffer_size_; ++it) {
+        in_.begin() + in_buffer_size_ - bytes_transferred;
+        it != in_.begin() + in_buffer_size_; ++it)
+      {
         oss << std::hex << static_cast<unsigned int>(*it) << " ";
       }
-      RCLCPP_DEBUG(logger_, "U-Blox received %li bytes \n%s", bytes_transferred,
-                   oss.str().c_str());
+      RCLCPP_DEBUG(
+        logger_, "U-Blox received %li bytes \n%s", bytes_transferred,
+        oss.str().c_str());
     }
 
     if (read_callback_) {
@@ -267,7 +287,7 @@ void AsyncWorker<StreamT>::readEnd(const asio::error_code& error,
 
     read_condition_.notify_all();
   } else {
-    RCLCPP_ERROR(logger_, "U-Blox ASIO transferred zero bytes");
+    RCLCPP_WARN(logger_, "U-Blox ASIO transferred zero bytes");
   }
 
   if (!stopping_) {
@@ -275,21 +295,24 @@ void AsyncWorker<StreamT>::readEnd(const asio::error_code& error,
   }
 }
 
-template <typename StreamT>
-void AsyncWorker<StreamT>::doClose() {
+template<typename StreamT>
+void AsyncWorker<StreamT>::doClose()
+{
   std::lock_guard<std::mutex> lock(read_mutex_);
   stopping_ = true;
   asio::error_code error;
   stream_->close(error);
   if (error) {
-    RCLCPP_ERROR(logger_, "Error while closing the AsyncWorker stream: %s",
-                 error.message().c_str());
+    RCLCPP_WARN(
+      logger_, "Error while closing the AsyncWorker stream: %s",
+      error.message().c_str());
   }
 }
 
-template <typename StreamT>
+template<typename StreamT>
 void AsyncWorker<StreamT>::wait(
-    const std::chrono::milliseconds& timeout) {
+  const std::chrono::milliseconds & timeout)
+{
   std::unique_lock<std::mutex> lock(read_mutex_);
   read_condition_.wait_for(lock, timeout);
 }
