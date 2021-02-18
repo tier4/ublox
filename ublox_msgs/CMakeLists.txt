@@ -120,6 +120,11 @@ install(DIRECTORY include/
   DESTINATION include
 )
 
+install(
+  FILES rosbridge_mapping_rules.yaml
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME}_lib)
 ament_export_targets(${PROJECT_NAME}_lib)
