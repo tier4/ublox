@@ -46,6 +46,7 @@ add_library(ublox_gps
   src/ublox_firmware7.cpp
   src/ublox_firmware8.cpp
   src/ublox_firmware9.cpp)
+target_link_libraries(ublox_gps atomic)
 ament_target_dependencies(ublox_gps
   "asio"
   "diagnostic_msgs"
